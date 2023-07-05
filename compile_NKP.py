@@ -41,14 +41,14 @@ def pip_install_req():
 
 
 def pack_resource_nkp():
-    NKResource.pack_dir_to_res(res_dir=p.join(Runtime.my_dir, "NKP_Res"),
-                               res_lib_path=p.join(Runtime.my_dir, "NKP_Res.py"),
+    NKResource.pack_dir_to_res(res_dir=p.join(Runtime.my_dir, "Res/NKP_Res"),
+                               res_lib_path=p.join(Runtime.my_dir, "NKP/NKP_Res.py"),
                                ext_list=[".png"])
 
 
 def pack_resource_custom():
-    NKResource.pack_dir_to_res(res_dir=p.join(Runtime.my_dir, "Custom_Res"),
-                               res_lib_path=p.join(Runtime.my_dir, "NKP_Custom_Res.py"),
+    NKResource.pack_dir_to_res(res_dir=p.join(Runtime.my_dir, "Res/Custom_Res"),
+                               res_lib_path=p.join(Runtime.my_dir, "NKP/NKP_Res_Custom.py"),
                                ext_list=[".png"])
 
 
@@ -58,14 +58,14 @@ def clear_compiled():
 
 def compile_nkp():
     NKLaunch.run_system(command=["PyInstaller", "-Fa", p.join(Runtime.my_dir, "run_NKP.py"),
-                                 "-i", p.join(Runtime.my_dir, "NKP_Res", "NKP.ico"),
+                                 "-i", p.join(Runtime.my_dir, "Res/NKP_Res", "NKP.ico"),
                                  "--clean",
                                  "--distpath", p.join(Runtime.my_dir, "Distribute", "NKPatrol")], pause=True)
 
 
 def compile_nkp_no_console():
     NKLaunch.run_system(command=["PyInstaller", "-Fa", p.join(Runtime.my_dir, "run_NKP.py"),
-                                 "-i", p.join(Runtime.my_dir, "NKP_Res", "NKP.ico"),
+                                 "-i", p.join(Runtime.my_dir, "Res/NKP_Res", "NKP.ico"),
                                  "--clean",
                                  "--distpath", p.join(Runtime.my_dir, "Distribute", "NKPatrol"),
                                  "-w"], pause=True)

@@ -1,5 +1,6 @@
 import NKP
-from NKP_Custom import init_hook
+from NKP.NKP_Language import lang_patch
+from custom_NKP import init_hook
 from NikoKit.NikoQt.NQLite import NQLite
 from NikoKit.NikoStd import NKConst
 
@@ -32,7 +33,7 @@ if __name__ == '__main__':
                  enable_nk_language=NKP.enable_nk_language)
 
     # Run App
-    NKP.Runtime.Service.NKLang.patch(NKConst.ZH_CN, NKP.lang_patch)
+    NKP.Runtime.Service.NKLang.patch(NKConst.ZH_CN, lang_patch)
     NKP.Runtime.Gui.WinMain = NKP.MainWin()
     NKP.Runtime.Gui.WinMain.show()
     APP.serve()

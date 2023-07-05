@@ -1,0 +1,16 @@
+lang_patch = {
+    "ui_tm_title": "过热关机模块",
+    "ui_tm_shutdown_temp": "自动关机温度",
+    "ui_tm_ohm_exe_path": "OpenHardwareMonitor.exe位置",
+    "ui_tm_ohm_json_url": "OpenHardwareMonitor-Json接口",
+    "ui_tm_ohm_status_off": "OHM状态：关闭",
+    "ui_tm_ohm_status_on": "OHM状态：开启",
+    "ui_tm_ohm_launching": "尝试启动OHM中...",
+    "ui_tm_ohm_launching_fail": "OHM启动失败 [%s]",
+    "ui_tm_ohm_launching_fail_no_url": "OHM启动失败，请设置OHM.exe位置",
+    "ui_tm_ohm_retrieving_json": "获取OHM资料中...",
+    "ui_tm_ohm_retrieving_json_fail": "OHM服务器功能未开启或端口错误 %s",
+    "ui_tm_current_cpu_status": "%s 温度[%s] 负载[%s] 电功耗[%s]",
+    "ui_tm_current_gpu_status": "%s 温度[%s] 负载[%s] 风扇[%s] 电功耗[%s]   ",
+    "ui_tm_current_shutdown_status": "关机温度墙:%s/%s 已触发关机次数:%s 上次过热关机时间:%s",
+}

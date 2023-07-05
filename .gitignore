@@ -1,0 +1,24 @@
+# Compiled Python files
+*.pyc
+__pycache__/
+
+# Virtual environment
+venv/
+env/
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Python package build
+dist/
+build/
+*.egg-info/
+
+# Log files
+*.log
+
+# Cache files
+.cache/

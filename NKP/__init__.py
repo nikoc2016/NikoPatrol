@@ -1,4 +1,4 @@
-from NKPatrol import NKP_Runtime
+from NKP import NKP_Runtime
 from NikoKit.NikoStd.NKVersion import NKVersion
 
 Runtime = NKP_Runtime.NKPRuntime  # Will be Override by NKP_Custom.init_hook
@@ -25,4 +25,3 @@ enable_tray_manager = True
 enable_appdata_manager = True
 enable_data_loader = True
 enable_nk_language = True
-lang_patch = {}
