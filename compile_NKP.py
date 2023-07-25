@@ -1,8 +1,14 @@
 import os.path as p
+import time
+
+import psutil
+
 from NikoKit.NikoLib import NKFileSystem
 from NikoKit.NikoLib.NKFileSystem import get_exe_info
 from NikoKit.NikoLib.NKResource import NKResource
-from NikoKit.NikoStd import NKLaunch
+from NikoKit.NikoLib.NKRoboCopy import NKRoboCopy
+from NikoKit.NikoStd import NKLaunch, NKConst
+from NikoKit.NikoStd.NKPrint import eprint
 
 
 class Runtime:
@@ -53,22 +59,59 @@ def pack_resource_custom():
 
 
 def clear_compiled():
-    NKFileSystem.delete_try(p.join(Runtime.my_dir, "Distribute", "NKPatrol"))
+    NKFileSystem.delete_try(p.join(Runtime.my_dir, "build"))
+    NKFileSystem.delete_try(p.join(Runtime.my_dir, "Distribute"))
+    NKFileSystem.delete_try(p.join(Runtime.my_dir, "__pycache__"))
+    NKFileSystem.delete_try(p.join(Runtime.my_dir, "run_NKP.spec"))
 
 
 def compile_nkp():
+    copy_niko_kit()
     NKLaunch.run_system(command=["PyInstaller", "-Fa", p.join(Runtime.my_dir, "run_NKP.py"),
                                  "-i", p.join(Runtime.my_dir, "Res/NKP_Res", "NKP.ico"),
                                  "--clean",
-                                 "--distpath", p.join(Runtime.my_dir, "Distribute", "NKPatrol")], pause=True)
+                                 "--distpath", p.join(Runtime.my_dir, "Distribute", "NKPatrol"),
+                                 ], pause=True)
+    await_pyinstaller()
+    remove_niko_kit()
 
 
 def compile_nkp_no_console():
+    copy_niko_kit()
     NKLaunch.run_system(command=["PyInstaller", "-Fa", p.join(Runtime.my_dir, "run_NKP.py"),
                                  "-i", p.join(Runtime.my_dir, "Res/NKP_Res", "NKP.ico"),
                                  "--clean",
                                  "--distpath", p.join(Runtime.my_dir, "Distribute", "NKPatrol"),
                                  "-w"], pause=True)
+    await_pyinstaller()
+    remove_niko_kit()
+
+
+def copy_niko_kit():
+    print("Copying NikoKit...")
+    NKRoboCopy.mirror_dir_to_dir(source_dir=p.join(p.dirname(Runtime.my_dir), "NikoKit"),
+                                 target_dir=p.join(Runtime.my_dir, "NikoKit"))
+
+
+def remove_niko_kit():
+    print("Deleting NikoKit...")
+    NKFileSystem.delete_try(p.join(Runtime.my_dir, "NikoKit"))
+
+
+def await_pyinstaller():
+    time.sleep(1)
+    while True:
+        pyinstaller_running = False
+        for process in psutil.process_iter(['pid', 'name']):
+            if process.info['name'] == "pyinstaller.exe":
+                print("Pyinstaller Running...")
+                pyinstaller_running = True
+                time.sleep(3)
+                break
+
+        if not pyinstaller_running:
+            print("Pyinstaller Finished.")
+            break
 
 
 def clear_icon_cache():

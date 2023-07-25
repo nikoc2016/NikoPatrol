@@ -1,17 +1,21 @@
 import traceback
 
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtCore
 from PySide2.QtCore import QCoreApplication, Signal
+from PySide2.QtGui import Qt
 
 import NKP
-from PySide2.QtWidgets import QVBoxLayout, QCheckBox, QSizePolicy, QScrollArea, QWidget, QHBoxLayout, QPushButton
+from PySide2.QtWidgets import QVBoxLayout, QCheckBox, QSizePolicy, QScrollArea, QWidget, QHBoxLayout, QPushButton, \
+    QSpacerItem
 
 from NikoKit.NikoLib import NKFileSystem
 from NikoKit.NikoLib.NKAppDataManager import NKAppDataMixin
 from NikoKit.NikoQt.NQKernel import NQFunctions
 from NikoKit.NikoQt.NQKernel.NQComponent.NQMenu import NQMenuOption
 from NikoKit.NikoQt.NQKernel.NQFunctions import clear_layout_margin
+from NikoKit.NikoQt.NQKernel.NQGui.NQWidget7zCompress import NQWidget7zCompress
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetArea import NQWidgetArea
+from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetCheckList import NQWidgetCheckList
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetConsoleTextEdit import NQWidgetConsoleTextEdit
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetInput import NQWidgetInput
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetUrlSelector import NQWidgetUrlSelector
@@ -23,7 +27,7 @@ from NikoKit.NikoStd.NKPrint import eprint
 class NKPMainWindow(NKAppDataMixin, NQWindow):
 
     def extract_auto_save_data(self, nkp_area):
-        save_data = {}
+        save_data = {f"{nkp_area.area_id}.area_collapsed": nkp_area.get_collapsed()}
         for member_name in nkp_area.__dict__:
             if member_name.startswith("autosave_"):
                 member = nkp_area.__dict__[member_name]
@@ -35,34 +39,47 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
                     save_value = member.get_value()
                 elif isinstance(member, NQWidgetUrlSelector):
                     save_value = member.get_url()
+                elif isinstance(member, NQWidget7zCompress):
+                    save_value = member.extract_all_params_to_dict()
+                elif isinstance(member, NQWidgetCheckList):
+                    save_value = member.get_checked()
                 elif isinstance(member, (int, float, str, type(None))):
                     save_value = member
                 elif isinstance(member, (list, dict)):
                     save_value = NKFileSystem.datastructure_to_base64(member)
+                elif isinstance(member, (list, dict)):
+                    save_value = NKFileSystem.datastructure_to_base64(member)
                 else:
-                    eprint(f"AutoSave::Extract::Not Support Type:{type(member)}")
+                    eprint(rf"AutoSave::Extract::Not Support Type:{type(member)}, Override in NKP\Widgets\__init__.py")
                 save_data[save_key] = save_value
         return save_data
 
     def apply_auto_save_data(self, nkp_area, member_name, member_value):
-        member_name = "autosave_" + member_name
-        if member_name not in nkp_area.__dict__:
-            eprint(f"AutoSave::Apply::Can't locate {nkp_area.area_id}.{member_name}:{member_value}")
+        if member_name == "area_collapsed":
+            nkp_area.set_collapsed(member_value)
         else:
-            member = nkp_area.__dict__[member_name]
-            if isinstance(member, QCheckBox):
-                member.setChecked(member_value)
-            elif isinstance(member, NQWidgetInput):
-                member.set_value(member_value)
-            elif isinstance(member, NQWidgetUrlSelector):
-                member.set_url(member_value)
-            elif isinstance(member, (int, float, str, type(None))):
-                nkp_area.__dict__[member_name] = member_value
-            elif isinstance(member, (list, dict)):
-                nkp_area.__dict__[member_name] = NKFileSystem.base64_to_datastructure(member_value)
+            member_name = "autosave_" + member_name
+            if member_name not in nkp_area.__dict__:
+                eprint(f"AutoSave::Apply::Can't locate {nkp_area.area_id}.{member_name}:{member_value}")
             else:
-                eprint(f"AutoSave::Apply::Not Support Type:{type(member)}||"
-                       f"{nkp_area.area_id}.{member_name}:{member_value}")
+                member = nkp_area.__dict__[member_name]
+                if isinstance(member, QCheckBox):
+                    member.setChecked(member_value)
+                elif isinstance(member, NQWidgetInput):
+                    member.set_value(member_value)
+                elif isinstance(member, NQWidgetUrlSelector):
+                    member.set_url(member_value)
+                elif isinstance(member, NQWidget7zCompress):
+                    member.restore_all_params_from_dict(member_value)
+                elif isinstance(member, NQWidgetCheckList):
+                    member.set_checked(member_value)
+                elif isinstance(member, (int, float, str, type(None))):
+                    nkp_area.__dict__[member_name] = member_value
+                elif isinstance(member, (list, dict)):
+                    nkp_area.__dict__[member_name] = NKFileSystem.base64_to_datastructure(member_value)
+                else:
+                    eprint(f"AutoSave::Apply::Not Support Type:{type(member)}||"
+                           f"{nkp_area.area_id}.{member_name}:{member_value}")
 
     @classmethod
     def new_appdata(cls):
@@ -86,14 +103,26 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
                         self.apply_auto_save_data(area, member_name, member_value)
 
     def __init__(self,
-                 w_width=700,
-                 w_height=400,
+                 w_width=800,
+                 w_height=500,
                  w_margin_x=None,
                  w_margin_y=None,
                  w_title=NKP.name,
                  auto_render_areas=None,
                  *args,
                  **kwargs):
+
+        # GUI Component
+        self.root_scroll_lay = QVBoxLayout()
+        self.button_lay = QHBoxLayout()
+        self.save_setting_button = QPushButton(NKP.Runtime.Service.NKLang.tran("save_settings"))
+        clear_layout_margin(self.root_scroll_lay)
+        self.root_scroll_adapter = QScrollArea()
+        self.root_scroll_adapter.setWidgetResizable(True)
+        self.main_lay_adapter = QWidget()
+        self.main_lay_adapter.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.main_lay = QVBoxLayout()
+
         super(NKPMainWindow, self).__init__(
             appdata_mgr=NKP.Runtime.Service.AppDataMgr,
             appdata_name=NKP.name,
@@ -106,15 +135,6 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
             **kwargs
         )
 
-        # GUI Component
-        self.root_scroll_lay = QVBoxLayout()
-        clear_layout_margin(self.root_scroll_lay)
-        self.root_scroll_adapter = QScrollArea()
-        self.root_scroll_adapter.setWidgetResizable(True)
-        self.main_lay_adapter = QWidget()
-        self.main_lay_adapter.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        self.main_lay = QVBoxLayout()
-
         if auto_render_areas:
             self.auto_render_areas = auto_render_areas
         else:
@@ -125,15 +145,21 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
         self.load_auto_render_areas()
         self.setLayout(self.root_scroll_lay)
         self.root_scroll_lay.addWidget(self.root_scroll_adapter)
+        self.root_scroll_lay.addLayout(self.button_lay)
         self.root_scroll_adapter.setWidget(self.main_lay_adapter)
         self.main_lay_adapter.setLayout(self.main_lay)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.button_lay.addStretch()
+        self.button_lay.addWidget(self.save_setting_button)
+        self.button_lay.addStretch()
 
         self.load_appdata()
 
     def connect_signals(self):
         NKP.Runtime.Signals.tray_clicked.connect(self.slot_tray_clicked)
         NKP.Runtime.Signals.auto_save.connect(self.save_appdata)
+        self.save_setting_button.clicked.connect(NKP.Runtime.Signals.auto_save)
 
     def load_auto_render_areas(self):
         # Expiring the old layout
@@ -142,7 +168,7 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
 
         # Creating the new layout
         self.main_lay = QVBoxLayout()
-        self.main_lay.setSpacing(0)
+        self.main_lay.setSpacing(10)
         self.main_lay.setContentsMargins(2, 2, 2, 2)
         self.main_lay_adapter.setLayout(self.main_lay)
         for area in self.auto_render_areas:
@@ -184,25 +210,18 @@ class NKPArea(NQWidgetArea):
 
         # GUI Component
         self.main_lay = QVBoxLayout()  # This is for custom gui components
-        self.button_layout = QHBoxLayout()   # This is for custom buttons
+        self.button_layout = QHBoxLayout()  # This is for custom buttons
 
         self.central_layout = QVBoxLayout()
         clear_layout_margin(self.main_lay)
         clear_layout_margin(self.central_layout)
-        clear_layout_margin(self.button_layout)
         self.autosave_enable_checkbox = QCheckBox(NKP.Runtime.Service.NKLang.tran("enable"))
-        self.save_setting_button = QPushButton(NKP.Runtime.Service.NKLang.tran("save_settings"))
         self.console_out = NQWidgetConsoleTextEdit(auto_scroll=True)
         self.console_out.setFixedHeight(150)
-        self.central_layout.addWidget(self.autosave_enable_checkbox)
+        self.central_layout.addItem(QSpacerItem(20, 10, QSizePolicy.Preferred, QSizePolicy.Fixed))
         self.central_layout.addLayout(self.main_lay)
         self.central_layout.addWidget(self.console_out)
         self.central_layout.addLayout(self.button_layout)
-        self.button_layout.addStretch()
-        self.button_layout.addWidget(self.save_setting_button)
-        self.button_layout.addStretch()
         super().__init__(title=self.area_title, central_layout=self.central_layout)
-
-    def connect_signals(self):
-        super().connect_signals()
-        self.save_setting_button.clicked.connect(NKP.Runtime.Signals.auto_save)
+        self._title_lay.addWidget(self.autosave_enable_checkbox)
+        self._title_lay.addStretch()

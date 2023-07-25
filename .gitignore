@@ -22,3 +22,7 @@ build/
 
 # Cache files
 .cache/
+
+# PyInstaller
+Distribute
+*.spec

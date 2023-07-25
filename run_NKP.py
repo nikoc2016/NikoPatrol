@@ -1,11 +1,11 @@
 import NKP
-from NKP.NKP_Language import lang_patch
-from custom_NKP import init_hook
+from NKP import NKP_Language
+from custom_NKP import init_hook, after_hook
 from NikoKit.NikoQt.NQLite import NQLite
 from NikoKit.NikoStd import NKConst
 
 if __name__ == '__main__':
-    # Custom Hook
+    # Before QApp Hook
     init_hook()
 
     # Init Application
@@ -32,8 +32,13 @@ if __name__ == '__main__':
                  enable_data_loader=NKP.enable_data_loader,
                  enable_nk_language=NKP.enable_nk_language)
 
-    # Run App
-    NKP.Runtime.Service.NKLang.patch(NKConst.ZH_CN, lang_patch)
-    NKP.Runtime.Gui.WinMain = NKP.MainWin()
-    NKP.Runtime.Gui.WinMain.show()
+    # After QApp Hook
+    NKP.Runtime.Service.NKLang.patch(NKConst.ZH_CN, NKP_Language.ZH_CN_Patch)
+    after_hook()
+
+    if not NKP.skip_main_win_load:
+        # Load main window
+        NKP.Runtime.Gui.WinMain = NKP.MainWin()
+        NKP.Runtime.Gui.WinMain.show()
+
     APP.serve()

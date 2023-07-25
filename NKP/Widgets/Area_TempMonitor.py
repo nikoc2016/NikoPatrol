@@ -53,14 +53,16 @@ class TemperatureMonitorArea(NKPArea):
                                                        mode=NQWidgetInput.MODE_INT,
                                                        default_value=105,
                                                        min_value=60,
-                                                       max_value=200)
+                                                       max_value=200,
+                                                       stretch_in_the_end=True)
         self.autosave_path_to_ohm = NQWidgetUrlSelector(title=NKP.Runtime.Service.NKLang.tran("ui_tm_ohm_exe_path"),
                                                         url=r"C:\Program Files\OpenHardwareMonitor"
                                                             r"\OpenHardwareMonitor.exe",
                                                         mode=NQWidgetUrlSelector.MODE_PATH)
         self.autosave_json_url_of_ohm = NQWidgetInput(prompt=NKP.Runtime.Service.NKLang.tran("ui_tm_ohm_json_url"),
                                                       mode=NQWidgetInput.MODE_TEXT,
-                                                      default_value="http://localhost:8085/data.json")
+                                                      default_value="http://localhost:8085/data.json",
+                                                      stretch_in_the_end=True)
         self.autosave_shutdown_count = 0
         self.autosave_shutdown_timestamp = None
         self.update_timeout_sec = 0

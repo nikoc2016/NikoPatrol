@@ -4,6 +4,8 @@ from NikoKit.NikoStd.NKVersion import NKVersion
 Runtime = NKP_Runtime.NKPRuntime  # Will be Override by NKP_Custom.init_hook
 MainWin = None
 
+skip_main_win_load = False
+
 name = "NKPatrol"
 name_short = "NKP"
 version = NKVersion("1.0.0")
