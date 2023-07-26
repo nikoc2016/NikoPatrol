@@ -44,7 +44,7 @@ class NKPMMainWindow(NKPMainWindow):
             TemperatureMonitorArea(),
             BackUpArea("Demo", "Demo"),
         ]
-        super().__init__(auto_render_areas=auto_render_areas)
+        super().__init__(auto_render_areas=auto_render_areas, w_title=NKP.name)
         self.button_lay.insertWidget(self.button_lay.count() - 1, self.install_7za_button)
 
     def connect_signals(self):
