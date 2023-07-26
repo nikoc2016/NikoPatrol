@@ -1,14 +1,18 @@
+import os
 import os.path as p
+import shutil
 import time
 
 import psutil
 
+import custom_NKP
 from NikoKit.NikoLib import NKFileSystem
 from NikoKit.NikoLib.NKFileSystem import get_exe_info
 from NikoKit.NikoLib.NKResource import NKResource
 from NikoKit.NikoLib.NKRoboCopy import NKRoboCopy
 from NikoKit.NikoStd import NKLaunch, NKConst
 from NikoKit.NikoStd.NKPrint import eprint
+from custom_NKP import init_hook
 
 
 class Runtime:
@@ -20,6 +24,7 @@ class Runtime:
 
 def main():
     Runtime.compiled, Runtime.my_dir, Runtime.my_file_name, Runtime.my_file_ext = get_exe_info(__file__)
+    init_hook()
 
     features = [
         ("Pip Install Req", pip_install_req),
@@ -65,26 +70,26 @@ def clear_compiled():
     NKFileSystem.delete_try(p.join(Runtime.my_dir, "run_NKP.spec"))
 
 
-def compile_nkp():
-    copy_niko_kit()
-    NKLaunch.run_system(command=["PyInstaller", "-Fa", p.join(Runtime.my_dir, "run_NKP.py"),
-                                 "-i", p.join(Runtime.my_dir, "Res/NKP_Res", "NKP.ico"),
-                                 "--clean",
-                                 "--distpath", p.join(Runtime.my_dir, "Distribute", "NKPatrol"),
-                                 ], pause=True)
-    await_pyinstaller()
-    remove_niko_kit()
-
-
 def compile_nkp_no_console():
+    compile_nkp(no_console=True)
+
+
+def compile_nkp(no_console=False):
     copy_niko_kit()
-    NKLaunch.run_system(command=["PyInstaller", "-Fa", p.join(Runtime.my_dir, "run_NKP.py"),
-                                 "-i", p.join(Runtime.my_dir, "Res/NKP_Res", "NKP.ico"),
-                                 "--clean",
-                                 "--distpath", p.join(Runtime.my_dir, "Distribute", "NKPatrol"),
-                                 "-w"], pause=True)
-    await_pyinstaller()
+    command = ["PyInstaller", "-Fa", p.join(Runtime.my_dir, "run_NKP.py"),
+               "-i", p.join(Runtime.my_dir, "Res/NKP_Res", "NKP.ico"),
+               "--clean",
+               "--distpath", p.join(Runtime.my_dir, "Distribute", "NKPatrol")]
+    if no_console:
+        command.append("-w")
+    print(f"PyInstalling -> {' '.join(command)}")
+    NKLaunch.run(command=command,
+                 cwd=Runtime.my_dir,
+                 display_mode=NKLaunch.DISPLAY_MODE_NORMAL).wait()
     remove_niko_kit()
+    shutil.move(p.join(Runtime.my_dir, "Distribute", "NKPatrol", "run_NKP.exe"),
+                p.join(Runtime.my_dir, f"{custom_NKP.NKP.name}.exe"))
+    clear_compiled()
 
 
 def copy_niko_kit():
@@ -96,22 +101,6 @@ def copy_niko_kit():
 def remove_niko_kit():
     print("Deleting NikoKit...")
     NKFileSystem.delete_try(p.join(Runtime.my_dir, "NikoKit"))
-
-
-def await_pyinstaller():
-    time.sleep(1)
-    while True:
-        pyinstaller_running = False
-        for process in psutil.process_iter(['pid', 'name']):
-            if process.info['name'] == "pyinstaller.exe":
-                print("Pyinstaller Running...")
-                pyinstaller_running = True
-                time.sleep(3)
-                break
-
-        if not pyinstaller_running:
-            print("Pyinstaller Finished.")
-            break
 
 
 def clear_icon_cache():

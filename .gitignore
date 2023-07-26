@@ -26,3 +26,4 @@ build/
 # PyInstaller
 Distribute
 *.spec
+*.exe
