@@ -183,7 +183,7 @@ class AppLauncherArea(NKPArea):
         self.run_thread.command = f"{self.autosave_launch_target.get_url()} {self.autosave_launch_params.get_value()}"
         cwd = self.autosave_cwd.get_url()
         if not cwd:
-            cwd = p.dirname(self.run_thread.command)
+            cwd = p.dirname(self.autosave_launch_target.get_url())
             if not cwd:
                 cwd = None
         self.run_thread.cwd = cwd
