@@ -4,6 +4,7 @@ import NKP
 from NKP import NKP_Runtime, NKP_Res, NKP_Res_Custom
 from NKP import NKP_Language
 from NKP.Widgets import NKPMainWindow
+from NKP.Widgets.Area_AppLauncher import AppLauncherArea
 from NKP.Widgets.Area_Backup import BackUpArea
 from NKP.Widgets.Area_TempMonitor import TemperatureMonitorArea
 from NikoKit.NikoLib import NKZip
@@ -44,7 +45,9 @@ class NKPMMainWindow(NKPMainWindow):
         self.install_7za_button = QPushButton(NKP.Runtime.Service.NKLang.tran("ui_extract_7za"))
         auto_render_areas = [
             TemperatureMonitorArea(),
+            AppLauncherArea("minecraft", NKPMRuntime.Service.NKLang.tran("minecraft")),
             BackUpArea("minecraft", NKPMRuntime.Service.NKLang.tran("minecraft")),
+            AppLauncherArea("son_of_forest", NKPMRuntime.Service.NKLang.tran("son_of_forest")),
             BackUpArea("son_of_forest", NKPMRuntime.Service.NKLang.tran("son_of_forest")),
         ]
         super().__init__(auto_render_areas=auto_render_areas, w_title=NKP.name)
