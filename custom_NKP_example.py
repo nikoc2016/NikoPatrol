@@ -4,6 +4,7 @@ import NKP
 from NKP import NKP_Runtime, NKP_Res, NKP_Res_Custom
 from NKP import NKP_Language
 from NKP.Widgets import NKPMainWindow
+from NKP.Widgets.Area_AppLauncher import AppLauncherArea
 from NKP.Widgets.Area_Backup import BackUpArea
 from NKP.Widgets.Area_TempMonitor import TemperatureMonitorArea
 from NikoKit.NikoLib import NKZip
@@ -43,8 +44,9 @@ class NKPMMainWindow(NKPMainWindow):
         auto_render_areas = [
             TemperatureMonitorArea(),
             BackUpArea("Demo", "Demo"),
+            AppLauncherArea("Demo", "Demo"),
         ]
-        super().__init__(auto_render_areas=auto_render_areas)
+        super().__init__(auto_render_areas=auto_render_areas, w_title=NKP.name)
         self.button_lay.insertWidget(self.button_lay.count() - 1, self.install_7za_button)
 
     def connect_signals(self):

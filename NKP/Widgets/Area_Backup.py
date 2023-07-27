@@ -383,10 +383,4 @@ class BackUpArea(NKPArea):
         except:
             pass
 
-        self.render_console()
-
-    def render_console(self):
-        html = ""
-        for line in self.console_lines:
-            html += cl(line[0], color_hex=line[1], change_line=True)
-        self.console_out.setHtml(html)
+        self.console_out.render_lines(self.console_lines)

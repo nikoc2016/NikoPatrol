@@ -6,7 +6,7 @@ from PySide2.QtGui import Qt
 
 import NKP
 from PySide2.QtWidgets import QVBoxLayout, QCheckBox, QSizePolicy, QScrollArea, QWidget, QHBoxLayout, QPushButton, \
-    QSpacerItem
+    QSpacerItem, QComboBox
 
 from NikoKit.NikoLib import NKFileSystem
 from NikoKit.NikoLib.NKAppDataManager import NKAppDataMixin
@@ -43,6 +43,8 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
                     save_value = member.extract_all_params_to_dict()
                 elif isinstance(member, NQWidgetCheckList):
                     save_value = member.get_checked()
+                elif isinstance(member, QComboBox):
+                    save_value = member.currentText()
                 elif isinstance(member, (int, float, str, type(None))):
                     save_value = member
                 elif isinstance(member, (list, dict)):
@@ -73,6 +75,8 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
                     member.restore_all_params_from_dict(member_value)
                 elif isinstance(member, NQWidgetCheckList):
                     member.set_checked(member_value)
+                elif isinstance(member, QComboBox):
+                    member.setCurrentText(member_value)
                 elif isinstance(member, (int, float, str, type(None))):
                     nkp_area.__dict__[member_name] = member_value
                 elif isinstance(member, (list, dict)):
