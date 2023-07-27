@@ -5,6 +5,7 @@ import traceback
 import os
 import os.path as p
 
+import psutil
 import select
 from PySide2.QtWidgets import QComboBox, QPushButton, QCheckBox, QHBoxLayout, QVBoxLayout
 
@@ -17,6 +18,7 @@ from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetInput import NQWidgetInput
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetUrlSelector import NQWidgetUrlSelector
 from NikoKit.NikoQt.NQKernel.NQFunctions import color_line as cl, clear_layout_margin
 from NikoKit.NikoStd import NKConst, NKLaunch
+from NikoKit.NikoStd.NKPrint import eprint
 
 
 class AppLauncherArea(NKPArea):
@@ -28,8 +30,6 @@ class AppLauncherArea(NKPArea):
 
         # Log Cache
         self.restart_counter = 0
-        self.console_lines_cache = []
-        self.pipe_lines_cache = []
 
         # GUI Components
         self.autosave_launch_target: NQWidgetUrlSelector = None
@@ -157,20 +157,8 @@ class AppLauncherArea(NKPArea):
             if int(restart_timeout) > 0:
                 console_lines.append((f"Restart: {self.restart_counter}s/{restart_timeout}s", NKConst.COLOR_GOLD))
 
-            if console_lines != self.console_lines_cache:
-                self.console_lines_cache = console_lines
-                html = ""
-                for line in console_lines:
-                    html += cl(line[0], color_hex=line[1], change_line=True)
-                self.status_console.setHtml(html)
-
-            if pipe_lines != self.pipe_lines_cache:
-                self.pipe_lines_cache = pipe_lines
-                html = ""
-                for line in pipe_lines:
-                    html += cl(line[0], color_hex=line[1], change_line=True)
-                self.console_out.setHtml(html)
-
+            self.status_console.render_lines(console_lines)
+            self.console_out.render_lines(pipe_lines)
         except:
             self.status_console.setHtml(cl(self.lang("ui_launch_thread_stopped"),
                                            color_hex=NKConst.COLOR_RED,
@@ -257,8 +245,7 @@ class AppLaunchThread(NQThread):
                             self.proc = NKLaunch.run(self.command, self.cwd, self.display_mode, self.custom_env)
                     except Exception as e:
                         self.run_flag = False
-                        for line in str(traceback.format_exc()).split("\n"):
-                            self.pipe_lines.append((line.replace(" ", "&nbsp;"), NKConst.COLOR_STD_ERR))
+                        self.pipe_lines.append((traceback.format_exc(), NKConst.COLOR_STD_ERR))
                 if not self.run_flag and self.proc is not None:
                     self.kill_proc()
                 if self.restart_flag:
@@ -272,36 +259,29 @@ class AppLaunchThread(NQThread):
                     try:
                         std_out, std_err = self.proc.communicate(timeout=1)
                         self.pipe_lines = []
-                        self.pipe_lines.append((
-                            html.escape(std_out.decode(NKConst.SYS_CHARSET)).replace("\n", "<br>").replace("\r\n",
-                                                                                                           "<br>"),
-                            None)
-                        )
-                        self.pipe_lines.append((
-                            html.escape(std_err.decode(NKConst.SYS_CHARSET)).replace("\n", "<br>").replace("\r\n",
-                                                                                                           "<br>"),
-                            NKConst.COLOR_STD_ERR)
-                        )
+                        self.pipe_lines.append((std_out.decode(NKConst.SYS_CHARSET), None))
+                        self.pipe_lines.append((std_err.decode(NKConst.SYS_CHARSET), NKConst.COLOR_STD_ERR))
                     except subprocess.TimeoutExpired as e:
                         pass
                     except Exception as e:
                         self.pipe_lines = []
-                        self.pipe_lines.append((
-                            html.escape(traceback.format_exc()).replace("\n", "<br>").replace("\r\n", "<br>"),
-                            NKConst.COLOR_STD_ERR)
-                        )
+                        self.pipe_lines.append((traceback.format_exc(), NKConst.COLOR_STD_ERR))
             time.sleep(1)
 
     def kill_proc(self):
         if isinstance(self.proc, subprocess.Popen):
+            pid = self.proc.pid
             self.console_lines[4] = ("Killing Proc", NKConst.COLOR_RED)
-            self.proc.terminate()
-            # Give it a chance to terminate gracefully
             try:
-                self.proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                # Force kill if it's not terminated within the timeout period
+                self.proc.terminate()
                 self.proc.kill()
+            except:
+                pass
+
+            if psutil.pid_exists(pid):
+                NKLaunch.run(["taskkill", "/pid", str(pid), "/f"])
+                time.sleep(1)
+
         self.proc = None
         self.console_lines[5] = (f"", None)
         self.console_lines[6] = (f"", None)
