@@ -43,6 +43,7 @@ ZH_CN_Patch = {
     "ui_launch_restart_interval": "重启间隔（秒）",
     "ui_launch_pipe": "使用子控制台 NKLaunch.run_pipe()",
     "ui_launch_autorun": "自动运行",
+    "ui_launch_proc_names": "重启时关闭进程名(逗号分隔):",
     "ui_launch_thread_started": "监控线程状态: 正在运行",
     "ui_launch_thread_stopped": "监控线程状态: 停止",
 }
