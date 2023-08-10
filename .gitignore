@@ -1,5 +1,6 @@
 # Compiled Python files
 *.pyc
+Thumbs.db
 __pycache__/
 
 # Virtual environment
