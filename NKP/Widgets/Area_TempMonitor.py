@@ -12,41 +12,6 @@ from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetUrlSelector import NQWidgetUrlSelecto
 from NikoKit.NikoStd import NKLaunch, NKTime
 
 
-class OhmJsonFetcher(QObject):
-    finished = Signal()
-
-    def __init__(self, contact_url="http://localhost:8085/data.json"):
-        super().__init__()
-        # Private Storage
-        self.error = None
-        self.result = None
-        self.new_url_await = contact_url
-        self.now_url_running = ""
-        self.contactor = NKOpenHM()
-
-        # Thread Control
-        self.pause_flag = True
-        self.stop_flag = False
-
-    def set_url(self, contact_url):
-        self.new_url_await = contact_url
-
-    def fetch_forever(self):
-        while not self.stop_flag:
-            if not self.pause_flag:
-                if self.new_url_await != self.now_url_running:
-                    self.now_url_running = self.new_url_await
-                    self.contactor.json_url = self.now_url_running
-                try:
-                    self.result = self.contactor.get_snapshot()
-                    self.error = None
-                except Exception as e:
-                    self.result = None
-                    self.error = str(e)
-            time.sleep(1)
-        self.finished.emit()
-
-
 class TemperatureMonitorArea(NKPArea):
     def __init__(self):
         self.autosave_temp_limit_input = NQWidgetInput(prompt=NKP.Runtime.Service.NKLang.tran("ui_tm_shutdown_temp"),
@@ -198,3 +163,38 @@ class TemperatureMonitorArea(NKPArea):
             if line:
                 render_text += line + "\n"
         self.console_out.setText(render_text)
+
+
+class OhmJsonFetcher(QObject):
+    finished = Signal()
+
+    def __init__(self, contact_url="http://localhost:8085/data.json"):
+        super().__init__()
+        # Private Storage
+        self.error = None
+        self.result = None
+        self.new_url_await = contact_url
+        self.now_url_running = ""
+        self.contactor = NKOpenHM()
+
+        # Thread Control
+        self.pause_flag = True
+        self.stop_flag = False
+
+    def set_url(self, contact_url):
+        self.new_url_await = contact_url
+
+    def fetch_forever(self):
+        while not self.stop_flag:
+            if not self.pause_flag:
+                if self.new_url_await != self.now_url_running:
+                    self.now_url_running = self.new_url_await
+                    self.contactor.json_url = self.now_url_running
+                try:
+                    self.result = self.contactor.get_snapshot()
+                    self.error = None
+                except Exception as e:
+                    self.result = None
+                    self.error = str(e)
+            time.sleep(1)
+        self.finished.emit()
