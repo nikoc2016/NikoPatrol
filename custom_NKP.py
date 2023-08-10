@@ -10,6 +10,7 @@ from NKP.Widgets.Area_TempMonitor import TemperatureMonitorArea
 from NikoKit.NikoLib import NKZip
 from NikoKit.NikoStd import NKConst
 from NikoKit.NikoStd.NKVersion import NKVersion
+from ZipEditor import ZipEditorArea
 
 
 def init_hook():
@@ -28,6 +29,9 @@ def init_hook():
             "ui_extract_7za": "安装精简版7Z",
             "minecraft": "我的世界",
             "son_of_forest": "森林之子",
+            "sotf_zipline_editor": "森林之子-索道编辑器",
+            "zip_json_path": "索道JSON位置",
+            "save": "保存"
         }
     )
 
@@ -47,6 +51,7 @@ class NKPMMainWindow(NKPMainWindow):
             TemperatureMonitorArea(),
             AppLauncherArea("minecraft", NKPMRuntime.Service.NKLang.tran("minecraft")),
             BackUpArea("minecraft", NKPMRuntime.Service.NKLang.tran("minecraft")),
+            ZipEditorArea(),
             AppLauncherArea("son_of_forest", NKPMRuntime.Service.NKLang.tran("son_of_forest")),
             BackUpArea("son_of_forest", NKPMRuntime.Service.NKLang.tran("son_of_forest")),
         ]
