@@ -181,6 +181,7 @@ class AppLauncherArea(NKPArea):
         self.run_thread.run_flag = True
 
     def slot_stop(self):
+        self.setup_thread_with_params()
         self.run_thread.run_flag = False
 
     def slot_restart(self):
