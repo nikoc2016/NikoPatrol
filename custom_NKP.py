@@ -31,7 +31,8 @@ def init_hook():
             "son_of_forest": "森林之子",
             "sotf_zipline_editor": "森林之子-索道编辑器",
             "zip_json_path": "索道JSON位置",
-            "save": "保存"
+            "save": "保存",
+            "connect_anchor": "链接锚点(先选中两行)"
         }
     )
 

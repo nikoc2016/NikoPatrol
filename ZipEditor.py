@@ -15,6 +15,7 @@ class ZipEditorArea(NKPArea):
         self.autosave_zip_json_path: NQWidgetUrlSelector = None
         self.coordinates_edit: QTextEdit = None
         self.status_label: QLabel = None
+        self.btn_connect_anchor: QPushButton = None
         self.btn_load: QPushButton = None
         self.btn_save: QPushButton = None
 
@@ -29,21 +30,25 @@ class ZipEditorArea(NKPArea):
                                                           mode=NQWidgetUrlSelector.MODE_PATH)
         self.coordinates_edit = QTextEdit()
         self.coordinates_edit.setLineWrapMode(QTextEdit.NoWrap)
+        self.coordinates_edit.setMinimumHeight(100)
 
         self.status_label = QLabel()
         self.btn_load = QPushButton(self.lang("load"))
+        self.btn_connect_anchor = QPushButton(self.lang("connect_anchor"))
         self.btn_save = QPushButton(self.lang("save"))
 
         self.main_lay.addWidget(self.autosave_zip_json_path)
         self.main_lay.addWidget(self.coordinates_edit)
         self.main_lay.addWidget(self.status_label)
         self.button_layout.addWidget(self.btn_load)
+        self.button_layout.addWidget(self.btn_connect_anchor)
         self.button_layout.addWidget(self.btn_save)
 
     def connect_signals(self):
         super().connect_signals()
         self.btn_load.clicked.connect(self.slot_load)
         self.btn_save.clicked.connect(self.slot_save)
+        self.btn_connect_anchor.clicked.connect(self.slot_connect_anchor)
 
     def slot_load(self):
         lines = []
@@ -82,3 +87,34 @@ class ZipEditorArea(NKPArea):
             self.status_label.setText("Json file not found.")
         except json.JSONDecodeError as e:
             self.status_label.setText(f"Decode Error: {e}")
+
+    def slot_connect_anchor(self):
+        selected_text = self.coordinates_edit.textCursor().selectedText()
+        selected_lines = selected_text.split('\u2029')  # Unicode line separator for QTextCursor selection
+
+        if len(selected_lines) != 2:
+            self.status_label.setText("Error: Must select exactly two lines.")
+            return
+
+        try:
+            first_dict = eval(selected_lines[0])
+            second_dict = eval(selected_lines[1])
+
+            # Using the second dict's _anchorAPosition to replace the first's _anchorBPosition
+            first_dict['_anchorBPosition'] = second_dict['_anchorAPosition'].copy()
+
+            # Using the second dict's _anchorAPosition to replace the second dict's _anchorBPosition
+            # and decrementing y by 5
+            second_dict['_anchorBPosition'] = second_dict['_anchorAPosition'].copy()
+            second_dict['_anchorBPosition']['y'] -= 5
+
+            # Generating new text
+            modified_text = str(first_dict) + "\n" + str(second_dict)
+
+            # Replacing selected text in the QTextEdit
+            cursor = self.coordinates_edit.textCursor()
+            cursor.removeSelectedText()
+            cursor.insertText(modified_text)
+
+        except Exception as e:
+            self.status_label.setText(f"An error occurred: {e}")
