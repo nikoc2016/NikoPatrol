@@ -88,14 +88,18 @@ def compile_nkp(no_console=False):
                  display_mode=NKLaunch.DISPLAY_MODE_NORMAL).wait()
     remove_niko_kit()
     shutil.move(p.join(Runtime.my_dir, "Distribute", "NKPatrol", "run_NKP.exe"),
-                p.join(Runtime.my_dir, f"{custom_NKP.NKP.name}_{custom_NKP.NKP.version}_{custom_NKP.NKP.version_tag}.exe"))
+                p.join(Runtime.my_dir,
+                       f"{custom_NKP.NKP.name}_{custom_NKP.NKP.version}_{custom_NKP.NKP.version_tag}.exe"))
     clear_compiled()
 
 
 def copy_niko_kit():
     print("Copying NikoKit...")
-    NKRoboCopy.mirror_dir_to_dir(source_dir=p.join(p.dirname(Runtime.my_dir), "NikoKit"),
-                                 target_dir=p.join(Runtime.my_dir, "NikoKit"))
+    NKRoboCopy.copy_dir_to_dir(source_dir=p.join(p.dirname(Runtime.my_dir), "NikoKit"),
+                               target_dir=p.join(Runtime.my_dir, "NikoKit"),
+                               except_dirs=[p.join(p.dirname(Runtime.my_dir), "NikoKit", ".git"),
+                                            p.join(p.dirname(Runtime.my_dir), "NikoKit", ".idea"),
+                                            p.join(p.dirname(Runtime.my_dir), "NikoKit", "__pycache__")])
 
 
 def remove_niko_kit():
