@@ -35,9 +35,7 @@ class NKPMRuntime(NKP_Runtime.NKPRuntime):
 
 class NKPMMainWindow(NKPMainWindow):
     def __init__(self):
-        auto_render_areas = [
-            SubDirPackerArea("demo", "demo")
-        ]
+        auto_render_areas = []
         super().__init__(auto_render_areas=auto_render_areas)
 
     def connect_signals(self):
