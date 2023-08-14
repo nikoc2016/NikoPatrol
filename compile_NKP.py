@@ -88,7 +88,7 @@ def compile_nkp(no_console=False):
                  display_mode=NKLaunch.DISPLAY_MODE_NORMAL).wait()
     remove_niko_kit()
     shutil.move(p.join(Runtime.my_dir, "Distribute", "NKPatrol", "run_NKP.exe"),
-                p.join(Runtime.my_dir, f"{custom_NKP.NKP.name}.exe"))
+                p.join(Runtime.my_dir, f"{custom_NKP.NKP.name}_{custom_NKP.NKP.version}_{custom_NKP.NKP.version_tag}.exe"))
     clear_compiled()
 
 

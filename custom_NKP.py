@@ -5,6 +5,8 @@ from NKP.Widgets import NKPMainWindow
 from NikoKit.NikoStd import NKConst
 from NikoKit.NikoStd.NKVersion import NKVersion
 
+from NKP.Widgets.Area_SubDirPacker import SubDirPackerArea
+
 
 def init_hook():
     NKP.Runtime = NKPMRuntime  # Hook On to Diy
@@ -33,7 +35,9 @@ class NKPMRuntime(NKP_Runtime.NKPRuntime):
 
 class NKPMMainWindow(NKPMainWindow):
     def __init__(self):
-        auto_render_areas = []
+        auto_render_areas = [
+            SubDirPackerArea("demo", "demo")
+        ]
         super().__init__(auto_render_areas=auto_render_areas)
 
     def connect_signals(self):
