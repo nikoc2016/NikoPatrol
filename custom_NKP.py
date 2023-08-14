@@ -12,8 +12,6 @@ from NikoKit.NikoStd import NKConst
 from NikoKit.NikoStd.NKVersion import NKVersion
 from ZipEditor import ZipEditorArea
 
-from NKP.Widgets.Area_SubDirPacker import SubDirPackerArea
-
 
 def init_hook():
     NKP.Runtime = NKPMRuntime  # Hook On to Diy
@@ -30,6 +28,7 @@ def init_hook():
         {
             "ui_extract_7za": "安装精简版7Z",
             "minecraft": "我的世界",
+            "the_forest": "森林1",
             "son_of_forest": "森林之子",
             "sotf_zipline_editor": "森林之子-索道编辑器",
             "zip_json_path": "索道JSON位置",
@@ -57,6 +56,8 @@ class NKPMMainWindow(NKPMainWindow):
             ZipEditorArea(),
             AppLauncherArea("son_of_forest", NKPMRuntime.Service.NKLang.tran("son_of_forest")),
             BackUpArea("son_of_forest", NKPMRuntime.Service.NKLang.tran("son_of_forest")),
+            AppLauncherArea("the_forest", NKPMRuntime.Service.NKLang.tran("the_forest")),
+            BackUpArea("the_forest", NKPMRuntime.Service.NKLang.tran("the_forest")),
         ]
         super().__init__(auto_render_areas=auto_render_areas, w_title=NKP.name)
         self.button_lay.insertWidget(self.button_lay.count() - 1, self.install_7za_button)
