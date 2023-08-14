@@ -40,6 +40,7 @@ class AppLauncherArea(NKPArea):
         self.autosave_restart_timeout_sec: NQWidgetInput = None
         self.autosave_run_pipe: QCheckBox = None
         self.autosave_autorun: QCheckBox = None
+        self.autosave_proc_names: NQWidgetInput = None
         self.status_console: NQWidgetConsoleTextEdit = None
         self.run_btn: QPushButton = None
         self.stop_btn: QPushButton = None
@@ -92,6 +93,12 @@ class AppLauncherArea(NKPArea):
         )
         self.autosave_run_pipe = QCheckBox(self.lang("ui_launch_pipe"))
         self.autosave_autorun = QCheckBox(self.lang("ui_launch_autorun"))
+        self.autosave_proc_names = NQWidgetInput(
+            prompt=self.lang("ui_launch_proc_names"),
+            mode=NQWidgetInput.MODE_TEXT,
+            default_value="",
+            stretch_in_the_end=True
+        )
         self.status_console = NQWidgetConsoleTextEdit(auto_scroll=True)
         self.run_btn = QPushButton(self.lang("run"))
         self.stop_btn = QPushButton(self.lang("stop"))
@@ -117,6 +124,7 @@ class AppLauncherArea(NKPArea):
         launch_setting_lay.addWidget(self.autosave_restart_timeout_sec)
         launch_setting_lay.addWidget(self.autosave_run_pipe)
         launch_setting_lay.addWidget(self.autosave_autorun)
+        launch_setting_lay.addWidget(self.autosave_proc_names)
         launch_setting_lay.addLayout(launch_button_lay)
 
         clear_layout_margin(launch_button_lay, 4)
@@ -173,6 +181,7 @@ class AppLauncherArea(NKPArea):
         self.run_thread.run_flag = True
 
     def slot_stop(self):
+        self.setup_thread_with_params()
         self.run_thread.run_flag = False
 
     def slot_restart(self):
@@ -190,6 +199,7 @@ class AppLauncherArea(NKPArea):
         self.run_thread.display_mode = int(self.autosave_launch_mode.currentText().split(" ")[1])
         self.run_thread.custom_env = None if not self.autosave_env.get_value() else self.autosave_env.get_value()
         self.run_thread.use_pipe = self.autosave_run_pipe.isChecked()
+        self.run_thread.close_procs = self.autosave_proc_names.get_value().replace(" ", "").split(",")
 
 
 class AppLaunchThread(NQThread):
@@ -201,6 +211,7 @@ class AppLaunchThread(NQThread):
         self.display_mode = 1
         self.custom_env = None
         self.use_pipe = False
+        self.close_procs = []
         self.proc = None
 
         # Flags
@@ -277,6 +288,10 @@ class AppLaunchThread(NQThread):
                 self.proc.kill()
             except:
                 pass
+
+            for proc in self.close_procs:
+                if proc:
+                    NKLaunch.run(["taskkill", "/im", proc, "/f"])
 
             if psutil.pid_exists(pid):
                 NKLaunch.run(["taskkill", "/pid", str(pid), "/f"])

@@ -43,6 +43,18 @@ ZH_CN_Patch = {
     "ui_launch_restart_interval": "重启间隔（秒）",
     "ui_launch_pipe": "使用子控制台 NKLaunch.run_pipe()",
     "ui_launch_autorun": "自动运行",
+    "ui_launch_proc_names": "重启时关闭进程名(逗号分隔):",
     "ui_launch_thread_started": "监控线程状态: 正在运行",
     "ui_launch_thread_stopped": "监控线程状态: 停止",
+    "ui_pkup_title": "子目录打包器(自动重建根目录)-[%s]",
+    "ui_pkup_root_setting_area": "选择根目录(可拖放)",
+    "ui_pkup_subdir_setting_area": "选择子目录(批量选择并拖放)",
+    "ui_pkup_src_root": "打包源-根目录",
+    "ui_pkup_dest_dir": "打包至-根目录",
+    "ui_pkup_start": "开始打包",
+    "ui_pkup_pause": "暂停打包",
+    "ui_pkup_restart": "重新开始",
+    "ui_pkup_copy_selected": "打包选中的子目录",
+    "ui_pkup_copy_unselected": "打包反选的子目录",
+    "ui_pkup_hide_cmd": "隐藏CMD"
 }

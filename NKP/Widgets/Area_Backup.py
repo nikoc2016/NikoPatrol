@@ -21,169 +21,6 @@ from NikoKit.NikoStd import NKConst
 from NikoKit.NikoStd import NKTime
 
 
-class BackUpThread(NQThread):
-    def __init__(self,
-                 backup_src_dir,
-                 backup_dest_dir,
-                 compress_command,
-                 hour_limit,
-                 day_limit,
-                 week_limit,
-                 month_limit,
-                 year_limit,
-                 overall_limit,
-                 delete_mode
-                 ):
-        # Config
-        self.backup_src_dir = backup_src_dir
-        self.backup_dest_dir = backup_dest_dir
-        self.compress_command = compress_command
-        self.hour_limit = hour_limit
-        self.day_limit = day_limit
-        self.week_limit = week_limit
-        self.month_limit = month_limit
-        self.year_limit = year_limit
-        self.overall_limit = overall_limit
-        self.delete_mode = delete_mode
-
-        # GUI Console
-        self.console_lines = []  # Item: (str_line, str_hex_color)
-
-        super().__init__()
-
-    def run(self):
-        start_time = NKTime.NKDatetime.datetime_to_str(NKTime.NKDatetime.now())
-        self.pr(f"Started Time: {start_time}")
-
-        # directory validation
-        if not p.isdir(self.backup_src_dir) or not p.isdir(self.backup_dest_dir):
-            self.pr(f"Invalid src_dir or dest_dir: {self.backup_src_dir} | {self.backup_dest_dir}", NKConst.COLOR_RED)
-        else:
-            # Copy
-            bk_dest_folder = p.join(self.backup_dest_dir,
-                                    f"{p.basename(self.backup_src_dir)}_{start_time}")
-            self.pr(f"Robo copying {self.backup_src_dir}->{bk_dest_folder}...")
-            error = NKRoboCopy.mirror_dir_to_dir(source_dir=self.backup_src_dir,
-                                                 target_dir=bk_dest_folder,
-                                                 silent_mode=True)
-            if error:
-                self.pr(f"Robo copy error: {error}", NKConst.COLOR_RED)
-            else:
-                self.pr(f"Robo copy successfully.", NKConst.COLOR_LIME)
-
-                # Compress
-                if not self.compress_command:
-                    self.pr(f"Compression Disabled, skipped.")
-                else:
-                    for idx in range(len(self.compress_command)):
-                        if self.compress_command[idx] == NQWidget7zCompress.COMP_SRC:
-                            self.compress_command[idx] = bk_dest_folder
-                        if self.compress_command[idx] == NQWidget7zCompress.COMP_7Z_URL:
-                            self.compress_command[idx] = bk_dest_folder + ".7z"
-
-                    self.pr("7z " + " ".join(self.compress_command))
-                    result = NKZip.free_7z_command(self.compress_command)
-                    while not result.is_finished():
-                        time.sleep(1)
-                    if result.info()["return_code"] != 0:
-                        for error_line in result.info()["std_err"]:
-                            self.pr(error_line, NKConst.COLOR_RED)
-                    else:
-                        self.pr(f"Compress successfully.", NKConst.COLOR_LIME)
-
-            # Deletion
-            files = os.listdir(self.backup_dest_dir)
-            pattern = r'\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}'
-            backup_items = []
-            for file in files:
-                match = re.search(pattern, file)
-                if match:
-                    datetime_string = match.group()
-                    backup_items.append((NKTime.NKDatetime.str_to_datetime(datetime_string),
-                                         p.join(self.backup_dest_dir, file)))
-                else:
-                    self.pr(f"Invalid Backup: {file}", NKConst.COLOR_RED)
-
-            to_delete = self.prune_backups(backups=backup_items,
-                                           hour_limit=int(self.hour_limit),
-                                           day_limit=int(self.day_limit),
-                                           week_limit=int(self.week_limit),
-                                           month_limit=int(self.month_limit),
-                                           year_limit=int(self.year_limit),
-                                           overall_limit=int(self.overall_limit),
-                                           deletion_mode=int(self.delete_mode))
-
-            for backup_url in to_delete:
-                self.pr(f"Deleting {backup_url}", NKConst.COLOR_EASY_BLUE)
-                if p.isdir(backup_url):
-                    NKFileSystem.boom_dir(backup_url, remove_root=True)
-                try:
-                    os.remove(backup_url)
-                except:
-                    pass
-
-        self.pr(f"End Time: {str(NKTime.NKDatetime.now())}")
-
-    def pr(self, line, text_color=None):
-        self.console_lines.append((line, text_color))
-
-    @staticmethod
-    def prune_backups(backups: List[Tuple[datetime.datetime, str]],
-                      hour_limit: int,
-                      day_limit: int,
-                      week_limit: int,
-                      month_limit: int,
-                      year_limit: int,
-                      overall_limit: int,
-                      deletion_mode: int) -> List[str]:
-
-        # Classification of backups into respective time intervals
-        backups_classified_by_intervals = [[] for _ in range(6)]
-        intervals_in_seconds = [3600, 24 * 3600, 7 * 24 * 3600, 30 * 24 * 3600, 365 * 24 * 3600]
-        for backup in backups:
-            elapsed_time = (datetime.datetime.now() - backup[0]).total_seconds()
-            for i, interval in enumerate(intervals_in_seconds):
-                if elapsed_time < interval:
-                    backups_classified_by_intervals[i].append(backup)
-                    break
-            else:
-                backups_classified_by_intervals[-1].append(backup)
-
-        # Prepare a list to collect backups that need to be deleted
-        backups_to_be_deleted = []
-        # Define limits for different time intervals
-        limits = [hour_limit, day_limit, week_limit, month_limit, year_limit, overall_limit]
-
-        # Process each time interval
-        for backups_in_interval, limit in zip(backups_classified_by_intervals, limits):
-            if limit == 0:  # If limit is 0, delete all backups in the interval
-                backups_to_be_deleted.extend(backups_in_interval)
-            elif 0 < limit < len(backups_in_interval):  # If the number of backups exceeds the limit
-                if deletion_mode == 1:  # Delete Oldest
-                    backups_to_be_deleted.extend(
-                        sorted(backups_in_interval, key=lambda b: b[0])[:len(backups_in_interval) - limit])
-                elif deletion_mode == 2:  # Delete Newest
-                    backups_to_be_deleted.extend(sorted(backups_in_interval, key=lambda b: b[0], reverse=True)[
-                                                 :len(backups_in_interval) - limit])
-                elif deletion_mode == 3:  # Delete Non-significant
-                    earliest_timestamp, latest_timestamp = min(backup[0] for backup in backups_in_interval), max(
-                        backup[0] for backup in backups_in_interval)
-                    total_time_duration = latest_timestamp - earliest_timestamp
-                    ideal_interval = total_time_duration / limit
-                    ideal_timestamps = [earliest_timestamp + i * ideal_interval for i in range(limit)]
-
-                    backups_mapped_to_ideal_timestamps = []
-                    for ideal_timestamp in ideal_timestamps:
-                        closest_backup = min(backups_in_interval, key=lambda backup: abs(backup[0] - ideal_timestamp))
-                        backups_mapped_to_ideal_timestamps.append(closest_backup)
-                        backups_in_interval.remove(closest_backup)
-
-                    backups_to_be_deleted.extend(
-                        backups_in_interval)  # The remaining backups in the interval are to be deleted
-
-        return [backup[1] for backup in backups_to_be_deleted]
-
-
 class BackUpArea(NKPArea):
     def __init__(self,
                  back_up_uid,
@@ -384,3 +221,166 @@ class BackUpArea(NKPArea):
             pass
 
         self.console_out.render_lines(self.console_lines)
+
+
+class BackUpThread(NQThread):
+    def __init__(self,
+                 backup_src_dir,
+                 backup_dest_dir,
+                 compress_command,
+                 hour_limit,
+                 day_limit,
+                 week_limit,
+                 month_limit,
+                 year_limit,
+                 overall_limit,
+                 delete_mode
+                 ):
+        # Config
+        self.backup_src_dir = backup_src_dir
+        self.backup_dest_dir = backup_dest_dir
+        self.compress_command = compress_command
+        self.hour_limit = hour_limit
+        self.day_limit = day_limit
+        self.week_limit = week_limit
+        self.month_limit = month_limit
+        self.year_limit = year_limit
+        self.overall_limit = overall_limit
+        self.delete_mode = delete_mode
+
+        # GUI Console
+        self.console_lines = []  # Item: (str_line, str_hex_color)
+
+        super().__init__()
+
+    def run(self):
+        start_time = NKTime.NKDatetime.datetime_to_str(NKTime.NKDatetime.now())
+        self.pr(f"Started Time: {start_time}")
+
+        # directory validation
+        if not p.isdir(self.backup_src_dir) or not p.isdir(self.backup_dest_dir):
+            self.pr(f"Invalid src_dir or dest_dir: {self.backup_src_dir} | {self.backup_dest_dir}", NKConst.COLOR_RED)
+        else:
+            # Copy
+            bk_dest_folder = p.join(self.backup_dest_dir,
+                                    f"{p.basename(self.backup_src_dir)}_{start_time}")
+            self.pr(f"Robo copying {self.backup_src_dir}->{bk_dest_folder}...")
+            error = NKRoboCopy.mirror_dir_to_dir(source_dir=self.backup_src_dir,
+                                                 target_dir=bk_dest_folder,
+                                                 silent_mode=True)
+            if error:
+                self.pr(f"Robo copy error: {error}", NKConst.COLOR_RED)
+            else:
+                self.pr(f"Robo copy successfully.", NKConst.COLOR_LIME)
+
+                # Compress
+                if not self.compress_command:
+                    self.pr(f"Compression Disabled, skipped.")
+                else:
+                    for idx in range(len(self.compress_command)):
+                        if self.compress_command[idx] == NQWidget7zCompress.COMP_SRC:
+                            self.compress_command[idx] = bk_dest_folder
+                        if self.compress_command[idx] == NQWidget7zCompress.COMP_7Z_URL:
+                            self.compress_command[idx] = bk_dest_folder + ".7z"
+
+                    self.pr("7z " + " ".join(self.compress_command))
+                    result = NKZip.free_7z_command(self.compress_command)
+                    while not result.is_finished():
+                        time.sleep(1)
+                    if result.info()["return_code"] != 0:
+                        for error_line in result.info()["std_err"]:
+                            self.pr(error_line, NKConst.COLOR_RED)
+                    else:
+                        self.pr(f"Compress successfully.", NKConst.COLOR_LIME)
+
+            # Deletion
+            files = os.listdir(self.backup_dest_dir)
+            pattern = r'\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}'
+            backup_items = []
+            for file in files:
+                match = re.search(pattern, file)
+                if match:
+                    datetime_string = match.group()
+                    backup_items.append((NKTime.NKDatetime.str_to_datetime(datetime_string),
+                                         p.join(self.backup_dest_dir, file)))
+                else:
+                    self.pr(f"Invalid Backup: {file}", NKConst.COLOR_RED)
+
+            to_delete = self.prune_backups(backups=backup_items,
+                                           hour_limit=int(self.hour_limit),
+                                           day_limit=int(self.day_limit),
+                                           week_limit=int(self.week_limit),
+                                           month_limit=int(self.month_limit),
+                                           year_limit=int(self.year_limit),
+                                           overall_limit=int(self.overall_limit),
+                                           deletion_mode=int(self.delete_mode))
+
+            for backup_url in to_delete:
+                self.pr(f"Deleting {backup_url}", NKConst.COLOR_EASY_BLUE)
+                if p.isdir(backup_url):
+                    NKFileSystem.boom_dir(backup_url, remove_root=True)
+                try:
+                    os.remove(backup_url)
+                except:
+                    pass
+
+        self.pr(f"End Time: {str(NKTime.NKDatetime.now())}")
+
+    def pr(self, line, text_color=None):
+        self.console_lines.append((line, text_color))
+
+    @staticmethod
+    def prune_backups(backups: List[Tuple[datetime.datetime, str]],
+                      hour_limit: int,
+                      day_limit: int,
+                      week_limit: int,
+                      month_limit: int,
+                      year_limit: int,
+                      overall_limit: int,
+                      deletion_mode: int) -> List[str]:
+
+        # Classification of backups into respective time intervals
+        backups_classified_by_intervals = [[] for _ in range(6)]
+        intervals_in_seconds = [3600, 24 * 3600, 7 * 24 * 3600, 30 * 24 * 3600, 365 * 24 * 3600]
+        for backup in backups:
+            elapsed_time = (datetime.datetime.now() - backup[0]).total_seconds()
+            for i, interval in enumerate(intervals_in_seconds):
+                if elapsed_time < interval:
+                    backups_classified_by_intervals[i].append(backup)
+                    break
+            else:
+                backups_classified_by_intervals[-1].append(backup)
+
+        # Prepare a list to collect backups that need to be deleted
+        backups_to_be_deleted = []
+        # Define limits for different time intervals
+        limits = [hour_limit, day_limit, week_limit, month_limit, year_limit, overall_limit]
+
+        # Process each time interval
+        for backups_in_interval, limit in zip(backups_classified_by_intervals, limits):
+            if limit == 0:  # If limit is 0, delete all backups in the interval
+                backups_to_be_deleted.extend(backups_in_interval)
+            elif 0 < limit < len(backups_in_interval):  # If the number of backups exceeds the limit
+                if deletion_mode == 1:  # Delete Oldest
+                    backups_to_be_deleted.extend(
+                        sorted(backups_in_interval, key=lambda b: b[0])[:len(backups_in_interval) - limit])
+                elif deletion_mode == 2:  # Delete Newest
+                    backups_to_be_deleted.extend(sorted(backups_in_interval, key=lambda b: b[0], reverse=True)[
+                                                 :len(backups_in_interval) - limit])
+                elif deletion_mode == 3:  # Delete Non-significant
+                    earliest_timestamp, latest_timestamp = min(backup[0] for backup in backups_in_interval), max(
+                        backup[0] for backup in backups_in_interval)
+                    total_time_duration = latest_timestamp - earliest_timestamp
+                    ideal_interval = total_time_duration / limit
+                    ideal_timestamps = [earliest_timestamp + i * ideal_interval for i in range(limit)]
+
+                    backups_mapped_to_ideal_timestamps = []
+                    for ideal_timestamp in ideal_timestamps:
+                        closest_backup = min(backups_in_interval, key=lambda backup: abs(backup[0] - ideal_timestamp))
+                        backups_mapped_to_ideal_timestamps.append(closest_backup)
+                        backups_in_interval.remove(closest_backup)
+
+                    backups_to_be_deleted.extend(
+                        backups_in_interval)  # The remaining backups in the interval are to be deleted
+
+        return [backup[1] for backup in backups_to_be_deleted]
