@@ -6,7 +6,7 @@ from PySide2.QtGui import Qt
 
 import NKP
 from PySide2.QtWidgets import QVBoxLayout, QCheckBox, QSizePolicy, QScrollArea, QWidget, QHBoxLayout, QPushButton, \
-    QSpacerItem, QComboBox
+    QSpacerItem, QComboBox, QRadioButton
 
 from NikoKit.NikoLib import NKFileSystem
 from NikoKit.NikoLib.NKAppDataManager import NKAppDataMixin
@@ -18,6 +18,7 @@ from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetArea import NQWidgetArea
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetCheckList import NQWidgetCheckList
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetConsoleTextEdit import NQWidgetConsoleTextEdit
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetInput import NQWidgetInput
+from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetUrlEdit import NQWidgetUrlEdit
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetUrlSelector import NQWidgetUrlSelector
 from NikoKit.NikoQt.NQKernel.NQGui.NQWindow import NQWindow
 from NikoKit.NikoQt.NQKernel.NQGui.NQWindowConsole import NQWindowPythonConsole
@@ -43,12 +44,14 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
                     save_value = member.extract_all_params_to_dict()
                 elif isinstance(member, NQWidgetCheckList):
                     save_value = member.get_checked()
+                elif isinstance(member, NQWidgetUrlEdit):
+                    save_value = NKFileSystem.datastructure_to_base64(member.get_urls())
                 elif isinstance(member, QComboBox):
                     save_value = member.currentText()
+                elif isinstance(member, QRadioButton):
+                    save_value = member.isChecked()
                 elif isinstance(member, (int, float, str, type(None))):
                     save_value = member
-                elif isinstance(member, (list, dict)):
-                    save_value = NKFileSystem.datastructure_to_base64(member)
                 elif isinstance(member, (list, dict)):
                     save_value = NKFileSystem.datastructure_to_base64(member)
                 else:
@@ -75,8 +78,12 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
                     member.restore_all_params_from_dict(member_value)
                 elif isinstance(member, NQWidgetCheckList):
                     member.set_checked(member_value)
+                elif isinstance(member, NQWidgetUrlEdit):
+                    member.set_urls(NKFileSystem.base64_to_datastructure(member_value))
                 elif isinstance(member, QComboBox):
                     member.setCurrentText(member_value)
+                elif isinstance(member, QRadioButton):
+                    member.setChecked(member_value)
                 elif isinstance(member, (int, float, str, type(None))):
                     nkp_area.__dict__[member_name] = member_value
                 elif isinstance(member, (list, dict)):
@@ -134,7 +141,7 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
             w_height=w_height,
             w_margin_x=w_margin_x,
             w_margin_y=w_margin_y,
-            w_title=w_title,
+            w_title=f"{w_title} V{NKP.version} {NKP.version_tag}",
             *args,
             **kwargs
         )
