@@ -41,3 +41,23 @@ def get_shots_from_dir(target_dir, hide_type=True):
         scene_info_list.append(f"sc{scene_no}:{','.join(shot_no)}")
 
     return ";".join(scene_info_list)
+
+
+def compare_shots(str_a, str_b):
+    # Split the strings into scenes and shots
+    a = str_a.split(":")
+    b = str_b.split(":")
+
+    # Check if the scenes match
+    if a[0] != b[0]:
+        return "Scene unmatched", "Scene unmatched"
+
+    # Split the shots into a set to easily find additions and subtractions
+    a_shots = set(a[1].split(","))
+    b_shots = set(b[1].split(","))
+
+    # Find the additions and subtractions
+    additions = sort_shots(list(b_shots - a_shots))
+    subtractions = sort_shots(list(a_shots - b_shots))
+
+    return additions, subtractions

@@ -1,7 +1,7 @@
 from PySide2.QtWidgets import QPushButton
 
 import NKP
-from LineProducer.LineProducerArea import LineProducerArea
+from LineProducer import LineProducerArea, LineProducerLang
 from NKP import NKP_Runtime, NKP_Res, NKP_Res_Custom
 from NKP import NKP_Language
 from NKP.Widgets import NKPMainWindow
@@ -44,14 +44,15 @@ class NKPMRuntime(NKP_Runtime.NKPRuntime):
 class NKPMMainWindow(NKPMainWindow):
     def __init__(self):
         self.install_7za_button = QPushButton(NKP.Runtime.Service.NKLang.tran("ui_extract_7za"))
+        NKP.Runtime.Service.NKLang.patch(NKConst.ZH_CN, LineProducerLang.ZH_CN)
         auto_render_areas = [
-            LineProducerArea(),
+            LineProducerArea.LineProducerArea(),
             TemperatureMonitorArea(),
             SubDirPackerArea(pack_up_uid="toonz", pack_up_dp_name="Toonz"),
             BackUpArea("gvf_share", "gvf_share"),
             AppLauncherArea("media_browser", "MediaBrowser")
         ]
-        super().__init__(auto_render_areas=auto_render_areas, w_title=NKP.name)
+        super().__init__(auto_render_areas=auto_render_areas, w_title=NKP.name, w_width=1115, w_height=900)
         self.button_lay.insertWidget(self.button_lay.count() - 1, self.install_7za_button)
 
     def connect_signals(self):
