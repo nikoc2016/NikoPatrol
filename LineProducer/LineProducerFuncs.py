@@ -1,5 +1,8 @@
 import os
+import os.path as p
 import re
+
+from NikoKit.NikoMaya.public_functions import get_texture_from_text
 
 
 def sort_shots(lst):
@@ -61,3 +64,51 @@ def compare_shots(str_a, str_b):
     subtractions = sort_shots(list(a_shots - b_shots))
 
     return additions, subtractions
+
+
+def get_latest_maya_file(maya_dir):
+    ma_files = [file for file in os.listdir(maya_dir) if file.endswith('.ma')]
+
+    version_pattern = r'_v(\d+)\.ma'
+    latest_version = 0
+    latest_file = None
+
+    for file_name in ma_files:
+        match = re.search(version_pattern, file_name)
+        if match:
+            version_number = int(match.group(1))
+            if version_number > latest_version:
+                latest_version = version_number
+                latest_file = p.join(maya_dir, file_name)
+
+    return latest_file
+
+
+def analyze_low_model_resource(asset_dir, asset_type):
+    low_mod_dir = p.join(asset_dir, "Mod", "Low")
+    low_rig_dir = p.join(asset_dir, "Rig", "Low")
+    low_mod_path = get_latest_maya_file(low_mod_dir)
+    low_rig_path = get_latest_maya_file(low_rig_dir)
+    resource_list = [p.join(low_mod_dir, "*"),
+                     p.join(low_rig_dir, "*"),
+                     p.join(asset_dir, "Xgen", "*")]
+
+    textures_required = set()
+    corrected_texture_paths = []
+
+    if low_mod_path is not None:
+        textures_required.update(get_texture_from_text(low_mod_path))
+    if low_rig_path is not None:
+        textures_required.update(get_texture_from_text(low_rig_path))
+
+    for texture_path in textures_required:
+        texture_path_segments = p.normpath(texture_path).split(os.sep)
+        asset_folder_name = p.basename(asset_dir)
+        corrected_texture_path = texture_path
+        for idx, path_segment in enumerate(texture_path_segments):
+            if path_segment == asset_folder_name:
+                corrected_texture_path = p.join(asset_dir, os.sep.join(texture_path_segments[idx+1:]))
+        corrected_texture_paths.append(corrected_texture_path)
+
+    resource_list.extend(corrected_texture_paths)
+    return resource_list

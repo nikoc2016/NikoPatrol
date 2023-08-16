@@ -26,6 +26,10 @@ ZH_CN = {
     "lp_ap_high_model": "打包高模",
     "lp_ap_low_model": "打包低模",
     "lp_ap_7z_command": "7Z命令",
+    "lp_ap_7z_out_dir": "打包至",
     "lp_ap_7z_prepare": "分析并生成命令",
+    "lp_ap_7z_analyzed": "分析完成",
     "lp_ap_7z_run": "执行",
+    "lp_ap_7z_executed": "已执行命令",
+    "lp_ap_7z_generate_command_first": "未发现命令行，请先分析.ma并生成命令行与资产路径",
 }
