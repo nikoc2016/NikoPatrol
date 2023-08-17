@@ -77,7 +77,7 @@ def compile_nkp_no_console():
 def compile_nkp(no_console=False):
     copy_niko_kit()
     command = ["PyInstaller", "-Fa", p.join(Runtime.my_dir, "run_NKP.py"),
-               "-i", p.join(Runtime.my_dir, "Res/NKP_Res", "NKP.ico"),
+               "-i", p.join(Runtime.my_dir, "Res/Custom_Res", "LP_LOGO.ico"),
                "--clean",
                "--distpath", p.join(Runtime.my_dir, "Distribute", "NKPatrol")]
     if no_console:
