@@ -11,8 +11,6 @@ from NikoKit.NikoLib import NKZip
 from NikoKit.NikoStd import NKConst
 from NikoKit.NikoStd.NKVersion import NKVersion
 
-from NKP.Widgets.Area_SubDirPacker import SubDirPackerArea
-
 
 def init_hook():
     NKP.Runtime = NKPMRuntime  # Hook On to Diy
