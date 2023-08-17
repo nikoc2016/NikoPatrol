@@ -16,6 +16,7 @@ from NikoKit.NikoLib import NKFileSystem
 from NikoKit.NikoMaya.public_functions import get_texture_from_text
 from NikoKit.NikoQt.NQKernel.NQComponent.NQThread import NQThread
 from NikoKit.NikoQt.NQKernel.NQFunctions import lay, lay_adaptor
+from NikoKit.NikoQt.NQKernel.NQGui.NQWidget7zCompress import NQWidget7zCompress
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetArea import NQWidgetArea
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetCheckList import NQWidgetCheckList
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetCopyPasteLine import NQWidgetCopyPasteLine
@@ -61,12 +62,13 @@ class LineProducerArea(NKPArea):
         self.ap_high_low_group: QButtonGroup = None
         self.autosave_ap_low_model: QRadioButton = None
         self.autosave_ap_high_model: QRadioButton = None
-        self.autosave_ap_7z_out_dir: NQWidgetUrlSelector = None
+        self.autosave_ap_7z_config: NQWidget7zCompress = None
         self.ap_7z_command: QLineEdit = None
         self.ap_7z_prepare_btn: QPushButton = None
         self.ap_7z_prepare_status: QLabel = None
         self.ap_7z_run_btn: QPushButton = None
         self.ap_7z_run_status: QLabel = None
+        self.ap_7z_execute_area: QHBoxLayout = None
 
         super().__init__(area_id=f"line_producer",
                          area_title="Line Producer")
@@ -77,7 +79,7 @@ class LineProducerArea(NKPArea):
         # Tab Host
         self.main_tab = QTabWidget()
         self.lay_1 = QVBoxLayout()
-        self.lay_2 = QHBoxLayout()
+        self.lay_2 = QVBoxLayout()
 
         # GetShotsFromDirectory
         self.autosave_gsfd_dir_select = NQWidgetUrlSelector(title=self.lang("lp_shot_dir"),
@@ -130,21 +132,25 @@ class LineProducerArea(NKPArea):
         self.ap_project_select = QComboBox()
         self.ap_refresh_projects_btn = QPushButton(self.lang("lp_ap_refresh_projects"))
         self.ap_refresh_assets_btn = QPushButton(self.lang("lp_ap_refresh_assets"))
-        ap_char_label = QLabel(self.lang("lp_ap_select_asset_character"))
-        self.ap_char_list = NQWidgetCheckList(exclusive=False)
-        ap_env_label = QLabel(self.lang("lp_ap_select_asset_env"))
-        self.ap_env_list = NQWidgetCheckList(exclusive=False)
-        ap_prop_label = QLabel(self.lang("lp_ap_select_asset_prop"))
-        self.ap_prop_list = NQWidgetCheckList(exclusive=False)
+        self.ap_char_list = NQWidgetCheckList(exclusive=False,
+                                              title=self.lang("lp_ap_select_asset_character"),
+                                              use_buttons=True)
+        self.ap_env_list = NQWidgetCheckList(exclusive=False,
+                                             title=self.lang("lp_ap_select_asset_env"),
+                                             use_buttons=True)
+        self.ap_prop_list = NQWidgetCheckList(exclusive=False,
+                                              title=self.lang("lp_ap_select_asset_prop"),
+                                              use_buttons=True)
         self.ap_high_low_group = QButtonGroup()
         self.autosave_ap_low_model = QRadioButton(self.lang("lp_ap_low_model"))
         self.autosave_ap_low_model.setChecked(True)
         self.autosave_ap_high_model = QRadioButton(self.lang("lp_ap_high_model"))
         self.ap_high_low_group.addButton(self.autosave_ap_low_model)
         self.ap_high_low_group.addButton(self.autosave_ap_high_model)
+        self.autosave_ap_7z_config = NQWidget7zCompress(disable_source_url=True,
+                                                            disable_compress_btn=True,
+                                                            disable_delete_src=True)
         ap_7z_command_label = QLabel(self.lang("lp_ap_7z_command"))
-        self.autosave_ap_7z_out_dir = NQWidgetUrlSelector(title=self.lang("lp_ap_7z_out_dir"),
-                                                          mode=NQWidgetUrlSelector.MODE_DIR)
         self.ap_7z_command = QLineEdit()
         self.ap_7z_command.hide()
         self.ap_7z_prepare_btn = QPushButton(self.lang("lp_ap_7z_prepare"))
@@ -153,18 +159,21 @@ class LineProducerArea(NKPArea):
         self.ap_7z_run_btn = QPushButton(self.lang("lp_ap_7z_run"))
         self.ap_7z_run_status = QLabel()
         self.ap_7z_run_status.hide()
+        self.ap_7z_execute_area = lay_adaptor(lay(contents=[
+            ap_7z_command_label,
+            self.ap_7z_command,
+            self.ap_7z_run_status,
+            self.ap_7z_run_btn
+        ], major_item=self.ap_7z_command, vertical=False, lead_stretch=False, end_stretch=False, margin=2))
+        self.ap_7z_execute_area.hide()
 
         control_lay = lay(contents=[
             ap_net_drv_help,
             self.autosave_ap_low_model,
             self.autosave_ap_high_model,
-            self.autosave_ap_7z_out_dir,
+            NQWidgetArea(title=self.lang("compress", "setting"), central_widget=self.autosave_ap_7z_config),
             self.ap_7z_prepare_btn,
             self.ap_7z_prepare_status,
-            lay(contents=[ap_7z_command_label, self.ap_7z_command],
-                vertical=False, major_item=self.ap_7z_command, lead_stretch=False, end_stretch=False, margin=0),
-            self.ap_7z_run_btn,
-            self.ap_7z_run_status,
         ], lead_stretch=False, end_stretch=True)
         control_area = NQWidgetArea(title=self.lang("lp_ap_control_panel"), central_layout=control_lay)
 
@@ -174,11 +183,8 @@ class LineProducerArea(NKPArea):
                 vertical=False, major_item=self.ap_project_select, lead_stretch=False, end_stretch=False, margin=2),
             lay(contents=[self.ap_refresh_projects_btn, self.ap_refresh_assets_btn], vertical=False,
                 lead_stretch=True, end_stretch=True, margin=2),
-            lay(contents=[
-                lay(contents=[ap_char_label, self.ap_char_list], lead_stretch=False, end_stretch=False, margin=2),
-                lay(contents=[ap_env_label, self.ap_env_list], lead_stretch=False, end_stretch=False, margin=2),
-                lay(contents=[ap_prop_label, self.ap_prop_list], lead_stretch=False, end_stretch=False, margin=2),
-            ], vertical=False, lead_stretch=False, end_stretch=False, margin=0)
+            lay(contents=[self.ap_char_list, self.ap_env_list, self.ap_prop_list],
+                vertical=False, lead_stretch=False, end_stretch=False, margin=0)
         ], lead_stretch=False, end_stretch=False)
         pack_area = NQWidgetArea(title=self.lang("lp_ap_pack_panel"), central_layout=pack_lay)
         self.slot_ap_refresh_projects()
@@ -188,9 +194,9 @@ class LineProducerArea(NKPArea):
         self.lay_1.addWidget(gsfd_area)
         self.lay_1.addWidget(cs_area)
 
-        self.lay_2.addWidget(control_area)
-        self.lay_2.addWidget(pack_area)
-        self.lay_2.setStretchFactor(pack_area, 1)
+        self.lay_2.addLayout(lay(contents=[control_area, pack_area],
+                                 major_item=pack_area, vertical=False, lead_stretch=False, end_stretch=False))
+        self.lay_2.addWidget(self.ap_7z_execute_area)
 
         self.main_lay.addWidget(self.main_tab)
         self.main_tab.addTab(lay_adaptor(self.lay_1), self.lang("lp_shots_management"))
@@ -254,10 +260,13 @@ class LineProducerArea(NKPArea):
             self.cs_status.setText(self.lang("lp_cs_no_match"))
 
     def slot_ap_refresh_projects(self):
-        projects = os.listdir(p.join(self.autosave_ap_net_drv_url.get_url(), "Projects"))
-        self.ap_project_select.clear()
-        for project in projects:
-            self.ap_project_select.addItem(project)
+        try:
+            projects = os.listdir(p.join(self.autosave_ap_net_drv_url.get_url(), "Projects"))
+            self.ap_project_select.clear()
+            for project in projects:
+                self.ap_project_select.addItem(project)
+        except:
+            pass
 
     def slot_ap_refresh_assets(self):
         net_drv = self.autosave_ap_net_drv_url.get_url()
@@ -335,10 +344,13 @@ class LineProducerArea(NKPArea):
         with open(pack_list_file, "w") as f:
             f.write("\n".join(pack_list))
 
-        pack_out_path = p.join(self.autosave_ap_7z_out_dir.get_url(), project + ".7z")
+        compress_setting = [arg for arg in self.autosave_ap_7z_config.generate_7z_command_list()
+                            if arg != NQWidget7zCompress.COMP_SRC]
+        compress_command = " ".join(["7zG"] + compress_setting + [f"-i@{pack_list_file}", "-spf"])
 
-        self.ap_7z_command.setText(f"7zG a {pack_out_path} -i@{pack_list_file} -spf")
+        self.ap_7z_command.setText(compress_command)
         self.ap_7z_command.show()
+        self.ap_7z_execute_area.show()
 
     def slot_ap_7z_run(self):
         command = self.ap_7z_command.text()

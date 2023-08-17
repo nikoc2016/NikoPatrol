@@ -52,7 +52,7 @@ class NKPMMainWindow(NKPMainWindow):
             BackUpArea("gvf_share", "gvf_share"),
             AppLauncherArea("media_browser", "MediaBrowser")
         ]
-        super().__init__(auto_render_areas=auto_render_areas, w_title=NKP.name, w_width=1115, w_height=900)
+        super().__init__(auto_render_areas=auto_render_areas, w_title=NKP.name, w_width=1200, w_height=900)
         self.button_lay.insertWidget(self.button_lay.count() - 1, self.install_7za_button)
 
     def connect_signals(self):

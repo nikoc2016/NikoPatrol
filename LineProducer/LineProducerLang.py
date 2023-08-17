@@ -10,7 +10,7 @@ ZH_CN = {
     "lp_cs_compared": "比对完成",
     "lp_cs_compare_only_one": "只能对比一场，请勿复制多场",
     "lp_ap": "资产打包",
-    "lp_ap_net_drv_help": "必须映射X盘，否则解析贴图路径错.\n"
+    "lp_ap_net_drv_help": "[可选]映射X盘命令.\n"
                           "subst X: /D\n"
                           "subst X: F:\XDrive\n"
                           "net use X: \\\\VitaliyServer\XDrive /user:username password",
