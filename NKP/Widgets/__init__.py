@@ -1,13 +1,15 @@
-import traceback
+import errno
+import tempfile
 
-from PySide2 import QtWidgets, QtCore
-from PySide2.QtCore import QCoreApplication, Signal
-from PySide2.QtGui import Qt
-
+from PySide2 import QtWidgets
+from PySide2.QtCore import QCoreApplication
+import os
+import os.path as p
 import NKP
 from PySide2.QtWidgets import QVBoxLayout, QCheckBox, QSizePolicy, QScrollArea, QWidget, QHBoxLayout, QPushButton, \
-    QSpacerItem, QComboBox, QRadioButton
+    QSpacerItem, QComboBox, QRadioButton, QMessageBox
 
+from NKP.NKP_SingleInstance import si_start_check, si_interact_check
 from NikoKit.NikoLib import NKFileSystem
 from NikoKit.NikoLib.NKAppDataManager import NKAppDataMixin
 from NikoKit.NikoQt.NQKernel import NQFunctions
@@ -23,6 +25,7 @@ from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetUrlSelector import NQWidgetUrlSelecto
 from NikoKit.NikoQt.NQKernel.NQGui.NQWindow import NQWindow
 from NikoKit.NikoQt.NQKernel.NQGui.NQWindowConsole import NQWindowPythonConsole
 from NikoKit.NikoStd.NKPrint import eprint
+from NikoKit.NikoStd.NKVersion import NKVersion
 
 
 class NKPMainWindow(NKAppDataMixin, NQWindow):
@@ -120,8 +123,14 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
                  w_margin_y=None,
                  w_title=NKP.name,
                  auto_render_areas=None,
+                 single_instance=True,
                  *args,
                  **kwargs):
+
+        # Settings
+        self.single_instance = single_instance
+        if single_instance:
+            si_start_check()
 
         # GUI Component
         self.root_scroll_lay = QVBoxLayout()
@@ -171,6 +180,8 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
         NKP.Runtime.Signals.tray_clicked.connect(self.slot_tray_clicked)
         NKP.Runtime.Signals.auto_save.connect(self.save_appdata)
         self.save_setting_button.clicked.connect(NKP.Runtime.Signals.auto_save)
+        if self.single_instance:
+            NKP.Runtime.Signals.second_passed.connect(si_interact_check)
 
     def load_auto_render_areas(self):
         # Expiring the old layout
@@ -199,16 +210,24 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
             NKP.Runtime.Gui.WinMain.slot_show()
 
     def configure_tray_menu(self):
-        my_menu = [
-            NQMenuOption(name="show_gui", display_name=self.lang("show", "window"),
-                         slot_callback=self.slot_show),
-            NQMenuOption(name="show_python_console", display_name=self.lang("show", " Python", "console"),
-                         slot_callback=self.slot_python_console),
-            NQMenuOption(name="quit", display_name=self.lang("quit"),
-                         slot_callback=self.slot_exit)
-        ]
-        NKP.Runtime.Gui.TrayIconMgr.tray_menu_generator.set_content_list(my_menu)
-        NKP.Runtime.Gui.TrayIconMgr.rebuild()
+        if NKP.Runtime.Gui.TrayIconMgr:
+            my_menu = [
+                NQMenuOption(name="show_gui", display_name=self.lang("show", "window"),
+                             slot_callback=self.slot_show),
+                NQMenuOption(name="show_python_console", display_name=self.lang("show", " Python", "console"),
+                             slot_callback=self.slot_python_console),
+                NQMenuOption(name="quit", display_name=self.lang("quit"),
+                             slot_callback=self.slot_exit)
+            ]
+            NKP.Runtime.Gui.TrayIconMgr.tray_menu_generator.set_content_list(my_menu)
+            NKP.Runtime.Gui.TrayIconMgr.rebuild()
+
+    def closeEvent(self, event):
+        if not NKP.Runtime.Gui.TrayIconMgr:
+            self.slot_exit()
+        else:
+            self.hide()
+        event.ignore()
 
 
 class NKPArea(NQWidgetArea):
