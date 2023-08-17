@@ -1,25 +1,40 @@
+from PySide2.QtWidgets import QPushButton
+
 import NKP
 from NKP import NKP_Runtime, NKP_Res, NKP_Res_Custom
 from NKP import NKP_Language
 from NKP.Widgets import NKPMainWindow
+from NKP.Widgets.Area_AppLauncher import AppLauncherArea
+from NKP.Widgets.Area_Backup import BackUpArea
+from NKP.Widgets.Area_TempMonitor import TemperatureMonitorArea
+from NikoKit.NikoLib import NKZip
 from NikoKit.NikoStd import NKConst
 from NikoKit.NikoStd.NKVersion import NKVersion
+from ZipEditor import ZipEditorArea
 
 
 def init_hook():
     NKP.Runtime = NKPMRuntime  # Hook On to Diy
     NKP.MainWin = NKPMMainWindow  # Hook On to Diy
-    NKP.name = "NKPatrol-DefaultMod"  # Must Change So AppData Won't Collide
+    NKP.name = "NKPatrol-Macau"  # Must Change So AppData Won't Collide
     NKP.skip_main_win_load = False  # Skipping load main win, do it manually in after_hook()
     NKP.enable_tray_manager = True  # Disable This if you want it one-time-run
     NKP.name_short = "NKP"
     NKP.icon_res_name = "NKP.png"
-    NKP.version = NKVersion("1.0.0")
+    NKP.version = NKVersion("1.1.0")
     NKP.version_tag = NKVersion.ALPHA
     NKP.resource_patch = NKP_Res.res
     NKP.resource_patch.update(NKP_Res_Custom.res)
     NKP_Language.ZH_CN_Patch.update(
         {
+            "ui_extract_7za": "安装精简版7Z",
+            "minecraft": "我的世界",
+            "the_forest": "森林1",
+            "son_of_forest": "森林之子",
+            "sotf_zipline_editor": "森林之子-索道编辑器",
+            "zip_json_path": "索道JSON位置",
+            "save": "保存",
+            "connect_anchor": "链接锚点(先选中两行)"
         }
     )
 
@@ -34,12 +49,28 @@ class NKPMRuntime(NKP_Runtime.NKPRuntime):
 
 class NKPMMainWindow(NKPMainWindow):
     def __init__(self):
-        auto_render_areas = []
+        self.install_7za_button = QPushButton(NKP.Runtime.Service.NKLang.tran("ui_extract_7za"))
+        auto_render_areas = [
+            TemperatureMonitorArea(),
+            AppLauncherArea("minecraft", NKPMRuntime.Service.NKLang.tran("minecraft")),
+            BackUpArea("minecraft", NKPMRuntime.Service.NKLang.tran("minecraft")),
+            ZipEditorArea(),
+            AppLauncherArea("son_of_forest", NKPMRuntime.Service.NKLang.tran("son_of_forest")),
+            BackUpArea("son_of_forest", NKPMRuntime.Service.NKLang.tran("son_of_forest")),
+            AppLauncherArea("the_forest", NKPMRuntime.Service.NKLang.tran("the_forest")),
+            BackUpArea("the_forest", NKPMRuntime.Service.NKLang.tran("the_forest")),
+        ]
         super().__init__(
             w_title=f"{NKP.name}",
             auto_render_areas=auto_render_areas,
             single_instance=True,
         )
+        self.button_lay.insertWidget(self.button_lay.count() - 1, self.install_7za_button)
 
     def connect_signals(self):
         super().connect_signals()
+        self.install_7za_button.clicked.connect(self.slot_install_7za)
+
+    def slot_install_7za(self):
+        print("Extracting 7z to temp.")
+        NKZip.prepare_7z_binaries()
