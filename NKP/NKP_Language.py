@@ -1,4 +1,5 @@
 ZH_CN_Patch = {
+    "ui_close_old": "检测到旧版本[%s]正在运行, 是否关闭旧版本？",
     "ui_tm_title": "过热关机",
     "ui_tm_shutdown_temp": "自动关机温度",
     "ui_tm_ohm_exe_path": "OpenHardwareMonitor.exe位置",

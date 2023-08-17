@@ -15,3 +15,5 @@ class NKPRuntime(NQRuntime):
         TempMonitorOHM = None
 
     Signals = NKPSignals()
+    SI_Lock = None
+    SI_Quit = False

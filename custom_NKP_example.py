@@ -6,6 +6,7 @@ from NKP import NKP_Language
 from NKP.Widgets import NKPMainWindow
 from NKP.Widgets.Area_AppLauncher import AppLauncherArea
 from NKP.Widgets.Area_Backup import BackUpArea
+from NKP.Widgets.Area_SubDirPacker import SubDirPackerArea
 from NKP.Widgets.Area_TempMonitor import TemperatureMonitorArea
 from NikoKit.NikoLib import NKZip
 from NikoKit.NikoStd import NKConst
@@ -17,6 +18,7 @@ def init_hook():
     NKP.MainWin = NKPMMainWindow  # Hook On to Diy
     NKP.name = "NKPatrol-DefaultMod"  # Must Change So AppData Won't Collide
     NKP.skip_main_win_load = False  # Skipping load main win, do it manually in after_hook()
+    NKP.enable_tray_manager = True  # Disable This if you want it one-time-run
     NKP.name_short = "NKP"
     NKP.icon_res_name = "NKP.png"
     NKP.version = NKVersion("1.0.0")
@@ -42,12 +44,16 @@ class NKPMMainWindow(NKPMainWindow):
     def __init__(self):
         self.install_7za_button = QPushButton(NKP.Runtime.Service.NKLang.tran("ui_extract_7za"))
         auto_render_areas = [
+            AppLauncherArea(launch_uid="Demo", launch_dp_name="Demo"),
+            BackUpArea(back_up_uid="Demo", back_up_dp_name="Demo"),
+            SubDirPackerArea(pack_up_uid="Demo", pack_up_dp_name="Demo"),
             TemperatureMonitorArea(),
-            BackUpArea("Demo", "Demo"),
-            AppLauncherArea("Demo", "Demo"),
         ]
-        super().__init__(auto_render_areas=auto_render_areas, w_title=NKP.name)
-        self.button_lay.insertWidget(self.button_lay.count() - 1, self.install_7za_button)
+        super().__init__(
+            w_title=f"{NKP.name}",
+            auto_render_areas=auto_render_areas,
+            single_instance=True,
+        )
 
     def connect_signals(self):
         super().connect_signals()

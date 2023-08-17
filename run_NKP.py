@@ -1,3 +1,5 @@
+import sys
+
 import NKP
 from NKP import NKP_Language
 from custom_NKP import init_hook, after_hook
@@ -41,4 +43,7 @@ if __name__ == '__main__':
         NKP.Runtime.Gui.WinMain = NKP.MainWin()
         NKP.Runtime.Gui.WinMain.show()
 
-    APP.serve()
+    if not NKP.Runtime.SI_Quit:
+        APP.serve()
+
+    sys.exit()
