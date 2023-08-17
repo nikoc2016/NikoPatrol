@@ -5,14 +5,13 @@ from NKP.Widgets import NKPMainWindow
 from NikoKit.NikoStd import NKConst
 from NikoKit.NikoStd.NKVersion import NKVersion
 
-from NKP.Widgets.Area_SubDirPacker import SubDirPackerArea
-
 
 def init_hook():
     NKP.Runtime = NKPMRuntime  # Hook On to Diy
     NKP.MainWin = NKPMMainWindow  # Hook On to Diy
     NKP.name = "NKPatrol-DefaultMod"  # Must Change So AppData Won't Collide
     NKP.skip_main_win_load = False  # Skipping load main win, do it manually in after_hook()
+    NKP.enable_tray_manager = True  # Disable This if you want it one-time-run
     NKP.name_short = "NKP"
     NKP.icon_res_name = "NKP.png"
     NKP.version = NKVersion("1.0.0")
@@ -36,7 +35,11 @@ class NKPMRuntime(NKP_Runtime.NKPRuntime):
 class NKPMMainWindow(NKPMainWindow):
     def __init__(self):
         auto_render_areas = []
-        super().__init__(auto_render_areas=auto_render_areas)
+        super().__init__(
+            w_title=f"{NKP.name}",
+            auto_render_areas=auto_render_areas,
+            single_instance=True,
+        )
 
     def connect_signals(self):
         super().connect_signals()
