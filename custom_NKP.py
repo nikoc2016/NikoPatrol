@@ -1,7 +1,6 @@
 from PySide2.QtWidgets import QPushButton
 
 import NKP
-from LineProducer import LineProducerArea, LineProducerLang
 from NKP import NKP_Runtime, NKP_Res, NKP_Res_Custom
 from NKP import NKP_Language
 from NKP.Widgets import NKPMainWindow
@@ -23,7 +22,7 @@ def init_hook():
     NKP.enable_tray_manager = True  # Disable This if you want it one-time-run
     NKP.name_short = "NKP"
     NKP.icon_res_name = "NKP.png"
-    NKP.version = NKVersion("1.0.1")
+    NKP.version = NKVersion("1.1.0")
     NKP.version_tag = NKVersion.ALPHA
     NKP.resource_patch = NKP_Res.res
     NKP.resource_patch.update(NKP_Res_Custom.res)
@@ -45,9 +44,7 @@ class NKPMRuntime(NKP_Runtime.NKPRuntime):
 class NKPMMainWindow(NKPMainWindow):
     def __init__(self):
         self.install_7za_button = QPushButton(NKP.Runtime.Service.NKLang.tran("ui_extract_7za"))
-        NKP.Runtime.Service.NKLang.patch(NKConst.ZH_CN, LineProducerLang.ZH_CN)
         auto_render_areas = [
-            LineProducerArea.LineProducerArea(),
             TemperatureMonitorArea(),
             SubDirPackerArea(pack_up_uid="toonz", pack_up_dp_name="Toonz"),
             BackUpArea("gvf_share", "gvf_share"),
