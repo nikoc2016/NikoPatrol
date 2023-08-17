@@ -46,7 +46,6 @@ class NKPMMainWindow(NKPMainWindow):
         self.install_7za_button = QPushButton(NKP.Runtime.Service.NKLang.tran("ui_extract_7za"))
         auto_render_areas = [
             TemperatureMonitorArea(),
-            SubDirPackerArea(pack_up_uid="toonz", pack_up_dp_name="Toonz"),
             BackUpArea("gvf_share", "gvf_share"),
             AppLauncherArea("media_browser", "MediaBrowser")
         ]
