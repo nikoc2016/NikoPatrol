@@ -7,7 +7,7 @@ import os
 import os.path as p
 import NKP
 from PySide2.QtWidgets import QVBoxLayout, QCheckBox, QSizePolicy, QScrollArea, QWidget, QHBoxLayout, QPushButton, \
-    QSpacerItem, QComboBox, QRadioButton, QMessageBox
+    QSpacerItem, QComboBox, QRadioButton, QMessageBox, QTextEdit
 
 from NKP.NKP_SingleInstance import si_start_check, si_interact_check
 from NikoKit.NikoLib import NKFileSystem
@@ -39,6 +39,8 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
                 save_value = ""
                 if isinstance(member, QCheckBox):
                     save_value = member.isChecked()
+                elif isinstance(member, QTextEdit):
+                    save_value = NKFileSystem.str_to_base64(member.toHtml())
                 elif isinstance(member, NQWidgetInput):
                     save_value = member.get_value()
                 elif isinstance(member, NQWidgetUrlSelector):
@@ -73,6 +75,8 @@ class NKPMainWindow(NKAppDataMixin, NQWindow):
                 member = nkp_area.__dict__[member_name]
                 if isinstance(member, QCheckBox):
                     member.setChecked(member_value)
+                elif isinstance(member, QTextEdit):
+                    member.setHtml(NKFileSystem.base64_to_string(member_value))
                 elif isinstance(member, NQWidgetInput):
                     member.set_value(member_value)
                 elif isinstance(member, NQWidgetUrlSelector):
