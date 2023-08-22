@@ -148,8 +148,8 @@ class LineProducerArea(NKPArea):
         self.ap_high_low_group.addButton(self.autosave_ap_low_model)
         self.ap_high_low_group.addButton(self.autosave_ap_high_model)
         self.autosave_ap_7z_config = NQWidget7zCompress(disable_source_url=True,
-                                                            disable_compress_btn=True,
-                                                            disable_delete_src=True)
+                                                        disable_compress_btn=True,
+                                                        disable_delete_src=True)
         ap_7z_command_label = QLabel(self.lang("lp_ap_7z_command"))
         self.ap_7z_command = QLineEdit()
         self.ap_7z_command.hide()
@@ -326,27 +326,48 @@ class LineProducerArea(NKPArea):
     def slot_ap_7z_prepare_stage2(self):
         pack_list_file_location = p.join(tempfile.gettempdir(), "AssetPackingList")
         NKFileSystem.scout(pack_list_file_location)
-        pack_list_file = p.join(pack_list_file_location,
-                                NKTime.NKDatetime.datetime_to_str(NKTime.NKDatetime.now()) + ".txt")
+        regular_list_file = p.join(pack_list_file_location,
+                                   NKTime.NKDatetime.datetime_to_str(NKTime.NKDatetime.now()) + ".txt")
+        invalid_list_file = p.join(pack_list_file_location,
+                                   NKTime.NKDatetime.datetime_to_str(NKTime.NKDatetime.now()) + "_Errors.txt")
 
         _, project, assets = self.get_pack_up_config(full_dir=True)
 
         if self.autosave_ap_high_model.isChecked():
-            pack_list = [p.join(asset_dir, "*") for asset_dir, asset_type in assets]
+            regular_list = [p.join(asset_dir, "*") for asset_dir, asset_type in assets]
+            invalid_list = None
         elif self.autosave_ap_low_model.isChecked():
-            pack_list = []
-            for asset_tuple, resource_list in self.ap_analyze_thread.assets_to_resources.items():
-                pack_list.extend(resource_list)
+            regular_list = []  # ["str_url", "str_url"...]
+            invalid_list = []  # [(Asset_Tuple, ["invalid_url", ...])]
+            for asset_tuple, url_pack in self.ap_analyze_thread.assets_to_resources.items():
+                regular_list.extend(url_pack["dirs"])
+                regular_list.extend(url_pack["valid"])
+                invalid_list.append(
+                    (asset_tuple, url_pack["invalid"])
+                )
+
+            regular_list = list(set(regular_list))
+
         else:
             self.console_out.render_text("High or Low not selected", NKConst.COLOR_STD_ERR)
             return
 
-        with open(pack_list_file, "w") as f:
-            f.write("\n".join(pack_list))
+        with open(regular_list_file, "w") as f:
+            f.write("\n".join(regular_list))
+
+        if isinstance(invalid_list, list):
+            write_str = ""
+            for asset_tuple, urls in invalid_list:
+                asset_str = f"{asset_tuple[0]}({asset_tuple[1]})\n"
+                for url in urls:
+                    asset_str += f"{url}\n"
+                write_str += asset_str + "\n\n"
+            with open(invalid_list_file, "w") as f:
+                f.write(write_str)
 
         compress_setting = [arg for arg in self.autosave_ap_7z_config.generate_7z_command_list()
                             if arg != NQWidget7zCompress.COMP_SRC]
-        compress_command = " ".join(["7zG"] + compress_setting + [f"-i@{pack_list_file}", "-spf"])
+        compress_command = " ".join(["7zG"] + compress_setting + [f"-i@{regular_list_file}", "-spf"])
 
         self.ap_7z_command.setText(compress_command)
         self.ap_7z_command.show()
@@ -396,7 +417,7 @@ class AssetResourceAnalyzeThread(NQThread):
     def __init__(self):
         super().__init__()
         self.assets = []  # (asset_dir, asset_type)
-        self.assets_to_resources = {}  # tuple: ["D:\*", "D:\a.abc"]
+        self.assets_to_resources = {}  # (asset_dir, asset_type) -> {"dirs": [], "valids": [], "invalids": []}
         self.current_idx = 0
 
     def run(self):
@@ -405,8 +426,15 @@ class AssetResourceAnalyzeThread(NQThread):
                 if self.current_idx < len(self.assets):
                     asset_tuple = self.assets[self.current_idx]
                     asset_dir, asset_type = asset_tuple
-                    self.assets_to_resources[asset_tuple] = analyze_low_model_resource(asset_dir=asset_dir,
-                                                                                       asset_type=asset_type)
+                    folder_list, texture_valid_paths, texture_invalid_paths = analyze_low_model_resource(
+                        asset_dir=asset_dir,
+                        asset_type=asset_type
+                    )
+                    self.assets_to_resources[asset_tuple] = {
+                        "dirs": folder_list,
+                        "valid": texture_valid_paths,
+                        "invalid": texture_invalid_paths,
+                    }
                     self.current_idx += 1
                 else:
                     self.stop_flag = True

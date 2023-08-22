@@ -89,26 +89,24 @@ def analyze_low_model_resource(asset_dir, asset_type):
     low_rig_dir = p.join(asset_dir, "Rig", "Low")
     low_mod_path = get_latest_maya_file(low_mod_dir)
     low_rig_path = get_latest_maya_file(low_rig_dir)
-    resource_list = [p.join(low_mod_dir, "*"),
-                     p.join(low_rig_dir, "*"),
-                     p.join(asset_dir, "Xgen", "*")]
+    folder_list = [p.join(low_mod_dir, "*"),
+                   p.join(low_rig_dir, "*"),
+                   p.join(asset_dir, "Xgen", "*")]
 
-    textures_required = set()
-    corrected_texture_paths = []
+    required_texture_paths = []
 
     if low_mod_path is not None:
-        textures_required.update(get_texture_from_text(low_mod_path))
+        required_texture_paths.extend(get_texture_from_text(low_mod_path))
     if low_rig_path is not None:
-        textures_required.update(get_texture_from_text(low_rig_path))
+        required_texture_paths.extend(get_texture_from_text(low_rig_path))
 
-    for texture_path in textures_required:
-        texture_path_segments = p.normpath(texture_path).split(os.sep)
-        asset_folder_name = p.basename(asset_dir)
-        corrected_texture_path = texture_path
-        for idx, path_segment in enumerate(texture_path_segments):
-            if path_segment == asset_folder_name:
-                corrected_texture_path = p.join(asset_dir, os.sep.join(texture_path_segments[idx+1:]))
-        corrected_texture_paths.append(corrected_texture_path)
+    required_texture_paths = list(set([p.normpath(t_path) for t_path in required_texture_paths]))
+    texture_valid_paths = []
+    texture_invalid_paths = []
+    for t_path in required_texture_paths:
+        if p.isfile(t_path):
+            texture_valid_paths.append(t_path)
+        else:
+            texture_invalid_paths.append(t_path)
 
-    resource_list.extend(corrected_texture_paths)
-    return resource_list
+    return folder_list, texture_valid_paths, texture_invalid_paths

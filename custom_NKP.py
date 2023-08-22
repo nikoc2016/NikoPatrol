@@ -16,7 +16,7 @@ def init_hook():
     NKP.enable_tray_manager = False  # Disable This if you want it one-time-run
     NKP.name_short = "NKP"
     NKP.icon_res_name = "LP_LOGO.png"
-    NKP.version = NKVersion("1.0.0")
+    NKP.version = NKVersion("1.0.1")
     NKP.version_tag = NKVersion.ALPHA
     NKP.resource_patch = NKP_Res.res
     NKP.resource_patch.update(NKP_Res_Custom.res)
