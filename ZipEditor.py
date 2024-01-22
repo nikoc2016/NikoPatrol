@@ -106,7 +106,7 @@ class ZipEditorArea(NKPArea):
             # Using the second dict's _anchorAPosition to replace the second dict's _anchorBPosition
             # and decrementing y by 5
             second_dict['_anchorBPosition'] = second_dict['_anchorAPosition'].copy()
-            second_dict['_anchorBPosition']['y'] -= 5
+            second_dict['_anchorBPosition']['y'] -= 1
 
             # Generating new text
             modified_text = str(first_dict) + "\n" + str(second_dict)
