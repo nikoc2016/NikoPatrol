@@ -31,6 +31,7 @@ def init_hook():
             "minecraft": "我的世界",
             "the_forest": "森林1",
             "son_of_forest": "森林之子",
+            "palworld": "幻兽帕鲁",
             "sotf_zipline_editor": "森林之子-索道编辑器",
             "zip_json_path": "索道JSON位置",
             "save": "保存",
@@ -59,6 +60,8 @@ class NKPMMainWindow(NKPMainWindow):
             BackUpArea("son_of_forest", NKPMRuntime.Service.NKLang.tran("son_of_forest")),
             AppLauncherArea("the_forest", NKPMRuntime.Service.NKLang.tran("the_forest")),
             BackUpArea("the_forest", NKPMRuntime.Service.NKLang.tran("the_forest")),
+            AppLauncherArea("palworld", NKPMRuntime.Service.NKLang.tran("palworld")),
+            BackUpArea("palworld", NKPMRuntime.Service.NKLang.tran("palworld")),
         ]
         super().__init__(
             w_title=f"{NKP.name}",
