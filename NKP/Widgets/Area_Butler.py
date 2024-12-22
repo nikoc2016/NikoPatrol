@@ -14,6 +14,7 @@ from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetTaskList import NQWidgetTaskList
 from NikoKit.NikoQt.NQKernel.NQGui.NQWidgetUrlSelector import NQWidgetUrlSelector
 from NikoKit.NikoStd import NKConst, NKTime
 from NikoKit.NikoStd.NKPrint import eprint
+from NikoKit.NikoStd.NKTime import NKDatetime
 
 
 # Declare your tasks and trigger mechanism, create a list of tasks and pass in.
@@ -72,8 +73,6 @@ class ButlerArea(NKPArea):
     def construct(self):
         super().construct()
 
-        if self.min_height_px > -1:
-            self.setMinimumHeight(self.min_height_px)
         self.console_out.hide()
         self.task_list = NQWidgetTaskList()
         self.task_exec_history = NQWidgetConsoleTextEdit()
@@ -111,7 +110,7 @@ class ButlerArea(NKPArea):
         left_right_splitter.addWidget(thread_status_area)
         top_down_splitter.addWidget(task_exec_history_area)
         top_down_splitter.addWidget(self.task_exec_logs_area)
-        left_right_splitter.setSizes([300, 700, 100])
+        left_right_splitter.setSizes([200, 700, 150])
         top_down_splitter.setSizes([300, 700])
 
         self.main_lay.addWidget(left_right_splitter)
@@ -122,6 +121,9 @@ class ButlerArea(NKPArea):
         self.button_layout.addWidget(self.btn_clear_all_threads)
         self.button_layout.addWidget(self.log_dir_url_selector)
         self.button_layout.addWidget(self.btn_apply_log_dir)
+
+        if self.min_height_px > -1:
+            self.task_list.setMinimumHeight(self.min_height_px)
 
     def connect_signals(self):
         super().connect_signals()
@@ -243,9 +245,15 @@ class ButlerArea(NKPArea):
             log_raw_str = NQFunctions.html_escape(log.log_context)
 
             if log.log_type == NKLogger.STD_OUT:
-                log_str += NQFunctions.color_line(line=log_raw_str,
-                                                  color_hex=NKConst.COLOR_STD_OUT,
-                                                  change_line=False)
+                try:
+                    dt = NKDatetime.str_to_datetime(log.log_context[:-1])
+                    log_str += NQFunctions.color_line(line=log_raw_str,
+                                                      color_hex=NKConst.COLOR_GOLD,
+                                                      change_line=False)
+                except:
+                    log_str += NQFunctions.color_line(line=log_raw_str,
+                                                      color_hex=NKConst.COLOR_STD_OUT,
+                                                      change_line=False)
             elif log.log_type == NKLogger.STD_ERR:
                 log_str += NQFunctions.color_line(line=log_raw_str,
                                                   color_hex=NKConst.COLOR_STD_ERR,
