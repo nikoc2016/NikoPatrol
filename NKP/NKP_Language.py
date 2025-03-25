@@ -59,6 +59,8 @@ ZH_CN_Patch = {
     "ui_pkup_copy_unselected": "打包反选的子目录",
     "ui_pkup_hide_cmd": "隐藏CMD",
     "ui_butler_title": "自动化任务-[%s]",
+    "ui_butler_timed": "定时",
+    "ui_butler_countdown": "倒数",
     "ui_butler_tasklist_area": "任务列表 (点击以查看详情或手动运行)",
     "ui_butler_task_exec_history_area": "任务执行历史",
     "ui_butler_task_exec_logs_area": "任务日志-[%s]",

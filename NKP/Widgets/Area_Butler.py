@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from PySide2.QtGui import Qt
 from PySide2.QtWidgets import QSplitter, QLabel, QPushButton
 
@@ -19,12 +21,13 @@ from NikoKit.NikoStd.NKTime import NKDatetime
 
 # Declare your tasks and trigger mechanism, create a list of tasks and pass in.
 class ButlerTask:
-    def __init__(self, task_id:str, worker_cls, run_after_secs:int, run_after_tasks:list):
+    def __init__(self, task_id:str, worker_cls, run_after_secs:int, run_after_tasks:list, run_at_time:str):
         # User Declaration
         self.task_id = task_id                 # [str] unique_id to the task
         self.worker_cls = worker_cls           # [class] worker class NOT instance
         self.run_after_secs = run_after_secs   # [int] task runs again after N seconds, -1 disable.
         self.run_after_tasks = run_after_tasks # [list<str>]  task runs when certain tasks just finished.
+        self.run_at_time = run_at_time         # [str] tasks runs daily at hh:mm:ss
 
         # Butler Private Workspace             # CLIENT DONT TOUCH
         self.task_label: QLabel = None         # For ButlerArea renders progression
@@ -168,6 +171,9 @@ class ButlerArea(NKPArea):
                     if task_object.task_count_up >= task_object.run_after_secs:
                         # Time triggers run
                         self.slot_run_task(task_object)
+                # Daily Timed Schedule
+                if datetime.now().strftime("%H:%M:%S") == task_object.run_at_time:
+                    self.slot_run_task(task_object)
 
     def update_task_list(self):
         for task_id, task_object in self.tasks.items():
@@ -197,14 +203,10 @@ class ButlerArea(NKPArea):
             if task_object.run_after_secs > -1 and thread_status == STATUS_NOT_EXIST:
                 secs_remain = task_object.run_after_secs - task_object.task_count_up
                 days, hours, minutes, seconds = NKTime.NKDatetime.secs_to_dhms(secs_remain)
+                task_next_eta = self.lang("ui_butler_countdown")
                 if days:
                     task_next_eta += str(days) + self.lang("day")
-                if hours:
-                    task_next_eta += str(hours) + self.lang("hour")
-                if minutes:
-                    task_next_eta += str(minutes) + self.lang("minute")
-                if seconds:
-                    task_next_eta += str(seconds) + self.lang("second")
+                task_next_eta += f"{hours}:{minutes}:{seconds}"
                 task_next_eta = color_line(line=task_next_eta, color_hex=NKConst.COLOR_GOLD, change_line=False)
 
             # Get Parent Tasks
@@ -213,8 +215,14 @@ class ButlerArea(NKPArea):
                 task_parents = self.lang("ui_butler_follow_task") + ",".join(task_object.run_after_tasks)
                 task_parents = color_line(line=task_parents, color_hex=NKConst.COLOR_GREY, change_line=False)
 
+            # Get Task Daily Timed
+            task_timed = ""
+            if task_object.run_at_time:
+                task_timed = f"{self.lang('ui_butler_timed')}{task_object.run_at_time}"
+                task_timed = color_line(line=task_timed, color_hex=NKConst.COLOR_LIME, change_line=False)
+
             # Update QLabel
-            task_object.task_label.setText(f"{exec_status} {task_name} {task_next_eta} {task_parents}")
+            task_object.task_label.setText(f"{exec_status} {task_name} {task_timed} {task_next_eta} {task_parents}")
 
     def update_task_exec_history(self):
         records = self.history_html_lines[-50:]
